@@ -73,6 +73,8 @@ func findFileMatches(patterns string) bool {
 	return false
 }
 
+var patternCache []string = []string{}
+
 func removeUnusedPatterns(contents string) string {
 	wd, _ := os.Getwd()
 	lines := strings.Split(contents, "\n")
@@ -84,11 +86,15 @@ func removeUnusedPatterns(contents string) string {
 
 		if len(trimmed) == 0 || trimmed[0] == '#' {
 			continue
-			// keep = append(keep, line)
-			// continue
 		}
 
-		if globExists(filepath.Join(wd, line)) {
+		if globExists(filepath.Join(wd, trimmed)) {
+			if contains(patternCache, trimmed) {
+				continue
+			}
+
+			patternCache = append(patternCache, trimmed)
+
 			if i > 0 {
 				j := 1
 				foundComment := false
@@ -116,6 +122,7 @@ func removeUnusedPatterns(contents string) string {
 					keep = append(keep, v)
 				}
 			}
+
 			keep = append(keep, line)
 		}
 	}

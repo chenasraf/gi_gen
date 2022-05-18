@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -95,4 +96,8 @@ func ternary[T any](cond bool, whenTrue T, whenFalse T) T {
 		return whenTrue
 	}
 	return whenFalse
+}
+
+func toS[T any](obj T) string {
+	return fmt.Sprint(obj)
 }
