@@ -1,0 +1,13 @@
+{
+  "line-length": {
+    "line_length": 100,
+    "tables": false,
+    "code_blocks": false,
+    "headings": false
+  },
+  "no-inline-html": false,
+  "first-line-h1": false,
+  "no-trailing-punctuation": false,
+  "heading-increment": false,
+  "commands-show-output": false
+}
