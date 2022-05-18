@@ -70,19 +70,35 @@ func getLanguageSelections(fileNames []string, selected []string, files map[stri
 	return selected, keys
 }
 
-func getPossibleFiles(allFiles []string, files map[string]string, fileNames []string) []string {
+func getPossibleFiles(allFiles []string) ([]string, map[string]string) {
+	files := make(map[string]string)
+	fileNames := []string{}
+
+	prompt := &survey.Confirm{
+		Message: "Would you like to try to scan for available templates automatically?\n" +
+			"Select 'No' ('n') to see all available templates",
+		Default: true,
+	}
+	var answer bool
+	survey.AskOne(prompt, &answer)
+
 	for _, filename := range allFiles {
 		contents := readFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
-		if findFileMatches(contents) {
-
+		if answer {
+			if findFileMatches(contents) {
+				files[langName] = contents
+				fileNames = append(fileNames, langName)
+			}
+		} else {
 			files[langName] = contents
 			fileNames = append(fileNames, langName)
 		}
 	}
-	return fileNames
+
+	return fileNames, files
 }
 
 func quit() {

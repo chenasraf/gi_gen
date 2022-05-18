@@ -17,29 +17,25 @@ func main() {
 
 	handleErr(err)
 
-	files := make(map[string]string)
-	fileNames := []string{}
-	fileNames = getPossibleFiles(allFiles, files, fileNames)
+	fileNames, files := getPossibleFiles(allFiles)
 
 	log.Println("Done.")
 
-	selected := []string{}
-	allKeys := maps.Keys(files)
-	selectedKeys := maps.Keys(files)
-
-	if len(allKeys) > 1 {
-		selected, selectedKeys = getLanguageSelections(fileNames, selected, files)
-	} else {
-		selected = []string{files[allKeys[0]]}
-	}
+	selected, selectedKeys := getLanguages(files, fileNames)
 
 	cleanupSelection := getCleanupSelection()
 	var outContents string
 	if cleanupSelection {
 		out := []string{}
 		for i, selection := range selected {
+			cleanSelection := removeUnusedPatterns(selection)
+			if strings.TrimSpace(cleanSelection) == "" {
+				continue
+			}
 			header := langHeader(selectedKeys[i])
-			out = append(out, ternary(i > 0, "\n", "")+header+removeUnusedPatterns(selection))
+			prefixNewline := ternary(i > 0, "\n", "")
+			contents := prefixNewline + header + cleanSelection
+			out = append(out, contents)
 		}
 		outContents = strings.Join(out, "\n")
 	} else {
@@ -56,6 +52,20 @@ func main() {
 		log.Printf("Writing to %s", outFile)
 		writeFile(outFile, outContents, true)
 	}
+}
+
+func getLanguages(files map[string]string, fileNames []string) ([]string, []string) {
+	selected := []string{}
+	allKeys := maps.Keys(files)
+	selectedKeys := maps.Keys(files)
+
+	if len(allKeys) > 1 {
+		selected, selectedKeys = getLanguageSelections(fileNames, selected, files)
+	} else {
+		selected = []string{files[allKeys[0]]}
+	}
+
+	return selected, selectedKeys
 }
 
 func langHeader(langName string) string {

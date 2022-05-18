@@ -4,15 +4,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
 func prepareGitignores() ([]string, error) {
-	var callerSkip = 0 // might need to be 1 in release mode?
-	_, filename, _, _ := runtime.Caller(callerSkip)
-	binDir := filepath.Dir(filename)
-	gitignoresDir := filepath.Join(binDir, ".github.gitignore")
+	gitignoresDir := getCacheDir()
 
 	if !fileExists(gitignoresDir) {
 		log.Println("Getting gitignore files...")
@@ -22,9 +18,16 @@ func prepareGitignores() ([]string, error) {
 	if getNeedsUpdate() {
 		log.Println("Updating gitignore files...")
 		runCmd("git", "pull", "origin", "master")
+		os.RemoveAll(filepath.Join(gitignoresDir, ".git"))
 	}
 
 	return getGitignores(gitignoresDir)
+}
+
+func getCacheDir() string {
+	homeDir, _ := os.UserHomeDir()
+	gitignoresDir := filepath.Join(homeDir, ".github.gitignore")
+	return gitignoresDir
 }
 
 func getGitignores(sourceDir string) ([]string, error) {
