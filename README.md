@@ -74,5 +74,5 @@ any amount to help me make up for the work hours.
     alt='Buy Me a Coffee at ko-fi.com' />
 </a>
 
-[releases]: /releases/latest
+[releases]: https://github.com/chenasraf/gi_gen/releases/latest
 [osi]: https://github.com/open-source-ideas/ideas/issues/296
