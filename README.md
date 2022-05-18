@@ -65,8 +65,9 @@ Testing was only done on macOS using ARM architecture, so feel free to report an
 platform if you have any, or are missing your platform and cannot/don't want to build from source (I
 tried building for the most common platforms).
 
-If you appreciate the time &amp; effort I put into developing this tool, kindly consider donating
-any amount to help me make up for the work hours.
+If you are feeling incredibly generous and appreciate the time &amp; effort I put into developing
+this tool, kindly consider donating any amount to help me make up for the work hours. It is really
+very much appreciated! 🙏🏼
 
 <a href='https://ko-fi.com/casraf' target='_blank'>
   <img height='36' style='border:0px;height:36px;'
