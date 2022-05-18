@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -84,12 +83,10 @@ func removeUnusedPatterns(contents string) string {
 		}
 
 		if globExists(filepath.Join(wd, line)) {
-			fmt.Println("Found glob for line: " + line + " (idx " + fmt.Sprint(i) + ")")
 			if i > 0 {
 				j := 1
 				foundComment := false
 				comments := []string{}
-				fmt.Println(fmt.Sprint(i) + ", " + fmt.Sprint(j))
 				for {
 					if i-j < 0 || i-j <= lastTakenIdx {
 						break
@@ -97,13 +94,10 @@ func removeUnusedPatterns(contents string) string {
 					cur := lines[i-j]
 					if len(cur) > 0 && cur[0] != '#' {
 						if !foundComment {
-							fmt.Println("Skipping line: " + cur + " (idx " + fmt.Sprint(i-j) + ")")
 						} else {
-							fmt.Println("Breaking on line: " + cur + " (idx " + fmt.Sprint(i-j) + ")")
 							break
 						}
 					} else {
-						fmt.Println("Inserting line: " + cur + " (idx " + fmt.Sprint(i-j) + ")")
 						lastTakenIdx = i - j
 						if len(cur) > 0 && cur[0] == '#' {
 							foundComment = true
