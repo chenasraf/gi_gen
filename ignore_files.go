@@ -1,10 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/exp/maps"
 )
 
 func prepareGitignores() ([]string, error) {
@@ -118,4 +121,24 @@ func removeUnusedPatterns(contents string) string {
 	}
 
 	return strings.Join(keep, "\n")
+}
+
+func getLanguages(files map[string]string, fileNames []string) ([]string, []string) {
+	selected := []string{}
+	allKeys := maps.Keys(files)
+	selectedKeys := maps.Keys(files)
+
+	if len(allKeys) > 1 {
+		selected, selectedKeys = getLanguageSelections(fileNames, selected, files)
+	} else {
+		selected = []string{files[allKeys[0]]}
+	}
+
+	return selected, selectedKeys
+}
+
+func langHeader(langName string) string {
+	sep := "#========================================================================\n"
+	header := fmt.Sprintf(sep+"# %s\n"+sep+"\n", langName)
+	return header
 }

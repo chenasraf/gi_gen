@@ -58,19 +58,22 @@ func writeFile(path string, data string, overwrite bool) bool {
 	if overwrite {
 		// os.Create(path)
 		err = os.WriteFile(path, []byte(data), fs.ModeAppend)
+		handleErr(err)
+
 	} else {
-		f, _ := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		handleErr(err)
 		defer f.Close()
 		_, err = f.WriteString("\n" + data)
+		handleErr(err)
 	}
-	handleErr(err)
 	return true
 }
 
 func handleErr(err error) {
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		log.Println("Encountered an error while running gi_gen:")
+		log.Fatalln(err)
 	}
 }
 

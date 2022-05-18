@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/exp/maps"
 )
 
 func main() {
-	wd, _ := os.Getwd()
+	wd, err := os.Getwd()
+	handleErr(err)
+
 	outFile := filepath.Join(wd, ".gitignore")
 	allFiles, err := prepareGitignores()
 
@@ -52,24 +51,4 @@ func main() {
 		log.Printf("Writing to %s", outFile)
 		writeFile(outFile, outContents, true)
 	}
-}
-
-func getLanguages(files map[string]string, fileNames []string) ([]string, []string) {
-	selected := []string{}
-	allKeys := maps.Keys(files)
-	selectedKeys := maps.Keys(files)
-
-	if len(allKeys) > 1 {
-		selected, selectedKeys = getLanguageSelections(fileNames, selected, files)
-	} else {
-		selected = []string{files[allKeys[0]]}
-	}
-
-	return selected, selectedKeys
-}
-
-func langHeader(langName string) string {
-	sep := "#========================================================================\n"
-	header := fmt.Sprintf(sep+"# %s\n"+sep+"\n", langName)
-	return header
 }
