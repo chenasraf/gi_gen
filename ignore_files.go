@@ -46,9 +46,9 @@ func findFileMatches(patterns string) bool {
 	wd, _ := os.Getwd()
 
 	for _, line := range lines {
-		// ignore empty lines / comments
 		line = strings.TrimSpace(line)
 
+		// ignore empty lines / comments
 		if len(line) == 0 || strings.ToLower(line)[0] == '#' {
 			continue
 		}
@@ -68,35 +68,57 @@ func findFileMatches(patterns string) bool {
 	return false
 }
 
-func removeUnusedPatterns(filename string, keep []string) []string {
+func removeUnusedPatterns(contents string) string {
 	wd, _ := os.Getwd()
-	contents := readFile(filename)
 	lines := strings.Split(contents, "\n")
-	keepCopy := []string{}
-	copy(keep, keepCopy)
-	found := false
+	keep := []string{}
+	lastTakenIdx := -1
 
-	for _, line := range lines {
+	for i, line := range lines {
 		trimmed := strings.TrimSpace(line)
-		_, exists := lineCache[trimmed]
-		if exists {
+
+		if len(trimmed) == 0 || trimmed[0] == '#' {
 			continue
-		}
-		lineCache[trimmed] = true
-		if len(trimmed) == 0 || strings.ToLower(string(trimmed[0])) == "#" {
-			lineCache[trimmed] = false
-			continue
+			// keep = append(keep, line)
+			// continue
 		}
 
 		if globExists(filepath.Join(wd, line)) {
-			found = true
-			keepCopy = append(keepCopy, line)
+			fmt.Println("Found glob for line: " + line + " (idx " + fmt.Sprint(i) + ")")
+			if i > 0 {
+				j := 1
+				foundComment := false
+				comments := []string{}
+				fmt.Println(fmt.Sprint(i) + ", " + fmt.Sprint(j))
+				for {
+					if i-j < 0 || i-j <= lastTakenIdx {
+						break
+					}
+					cur := lines[i-j]
+					if len(cur) > 0 && cur[0] != '#' {
+						if !foundComment {
+							fmt.Println("Skipping line: " + cur + " (idx " + fmt.Sprint(i-j) + ")")
+						} else {
+							fmt.Println("Breaking on line: " + cur + " (idx " + fmt.Sprint(i-j) + ")")
+							break
+						}
+					} else {
+						fmt.Println("Inserting line: " + cur + " (idx " + fmt.Sprint(i-j) + ")")
+						lastTakenIdx = i - j
+						if len(cur) > 0 && cur[0] == '#' {
+							foundComment = true
+						}
+						comments = insert(comments, 0, cur)
+					}
+					j++
+				}
+				for _, v := range comments {
+					keep = append(keep, v)
+				}
+			}
+			keep = append(keep, line)
 		}
 	}
 
-	if found {
-		keepCopy = insert(keepCopy, 0, fmt.Sprintf("\n# %s", filepath.Base(filename)))
-	}
-
-	return keep
+	return strings.Join(keep, "\n")
 }
