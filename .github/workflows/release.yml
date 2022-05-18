@@ -1,0 +1,133 @@
+name: build
+
+on:
+  create:
+    tags:
+      - v*
+
+permissions: write-all
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      # - name: Generate build files
+      #   uses: thatisuday/go-cross-build@v1
+      #   with:
+      #     platforms: "linux/amd64, darwin/amd64, windows/amd64"
+      #     package: ""
+      #     name: "gi_gen"
+      #     dest: "dist"
+      - name: Generate Build Files
+        uses: crazy-max/ghaction-xgo@v1
+        with:
+          xgo_version: latest
+          go_version: 1.18
+          dest: dist
+          prefix: gi_gen
+          targets: windows/386,linux/amd64,linux/arm64,darwin/arm64,darwin/amd64
+          v: true
+          x: false
+          race: false
+          ldflags: -s -w
+          buildmode: default
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+          retention-days: 1
+
+  Release:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+      - name: List Files
+        run: |
+          ls -l ./
+          ls -l ./dist
+          file -b --mime-type ./dist/gi_gen-darwin-10.16-arm64
+
+      - name: Create Release
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.ref }}
+          release_name: Release ${{ github.event.ref }}
+
+      #
+
+      - name: Upload Release Asset (macOS ARM)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_macos_x86
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-darwin-10.16-arm64
+          asset_name: gi_gen-${{ github.event.ref }}-macos-intel
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS Intel)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_macos_arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-darwin-10.16-amd64
+          asset_name: gi_gen-${{ github.event.ref }}-macos-arm
+          asset_content_type: application/octet-stream
+
+      #
+
+      - name: Upload Release Asset (Windows)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_windows
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-windows-4.0-386.exe
+          asset_name: gi_gen-${{ github.event.ref }}-windows.exe
+          asset_content_type: application/vnd.microsoft.portable-executable
+
+      #
+
+      - name: Upload Release Asset (Linux x86)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_linux_x86
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-linux-amd64
+          asset_name: gi_gen-${{ github.event.ref }}-linux-x86
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux ARM)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_linux_arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-linux-arm64
+          asset_name: gi_gen-${{ github.event.ref }}-linux-arm
+          asset_content_type: application/octet-stream
