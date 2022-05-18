@@ -14,6 +14,10 @@ import (
 // create line cache map for skipping previously checked glob lines
 var lineCache = make(map[string]bool)
 
+func quit() {
+	os.Exit(1)
+}
+
 func main() {
 	allFiles, err := prepareGitignores()
 
@@ -29,7 +33,7 @@ func main() {
 
 		if findFileMatches(contents) {
 			sep := "#========================================================================\n"
-			header := fmt.Sprintf(sep+"# %s\n"+sep+"\n", basename)
+			header := fmt.Sprintf(sep+"# %s\n"+sep+"\n", langName)
 			files[langName] = header + contents
 			fileNames = append(fileNames, langName)
 		}
@@ -48,6 +52,9 @@ func main() {
 
 		var inp []string
 		survey.AskOne(prompt, &inp)
+		if inp == nil {
+			quit()
+		}
 
 		for _, sel := range inp {
 			selected = append(selected, files[sel])
@@ -64,9 +71,12 @@ func main() {
 			Message: ".gitignore file found in this directory. Please pick an option:",
 			Options: []string{"Overwrite", "Append", "Skip"},
 		}
-		var inp2 string
+		inp2 := ""
 		survey.AskOne(prompt2, &inp2)
 		switch inp2 {
+		case "":
+			quit()
+			break
 		case "Overwrite":
 			log.Printf("Writing to %s", out)
 			writeFile(out, strings.Join(selected, "\n"), true)
