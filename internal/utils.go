@@ -1,4 +1,4 @@
-package main
+package internal
 
 import (
 	"fmt"
@@ -14,19 +14,19 @@ func UNUSED(x ...interface{}) {}
 
 var repoUrl = "https://github.com/github/gitignore"
 
-func fileExists(path string) bool {
+func FileExists(path string) bool {
 	_, err := os.Stat(path)
 	exists := !os.IsNotExist(err)
 	return exists
 }
 
-func globExists(path string) bool {
+func GlobExists(path string) bool {
 	res, err := filepath.Glob(path)
-	handleErr(err)
+	HandleErr(err)
 	return res != nil
 }
 
-func getNeedsUpdate() bool {
+func GetNeedsUpdate() bool {
 	localBytes, localErr := exec.Command("git", "rev-parse", "@").Output()
 	baseBytes, baseErr := exec.Command("git", "merge-base", "@", "@{u}").Output()
 	if localErr != nil {
@@ -43,46 +43,46 @@ func getNeedsUpdate() bool {
 	return localStr == baseStr
 }
 
-func runCmd(cmd string, args ...string) (string, error) {
+func RunCmd(cmd string, args ...string) (string, error) {
 	res, err := exec.Command(cmd, args...).Output()
 	return string(res), err
 }
 
-func readFile(path string) string {
+func ReadFile(path string) string {
 	res, err := os.ReadFile(path)
-	handleErr(err)
+	HandleErr(err)
 	return string(res)
 }
 
-func writeFile(path string, data string, overwrite bool) bool {
+func WriteFile(path string, data string, overwrite bool) bool {
 	var err error
 	if overwrite {
 		// os.Create(path)
 		err = os.WriteFile(path, []byte(data), fs.ModeAppend)
-		handleErr(err)
+		HandleErr(err)
 
 	} else {
 		f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		handleErr(err)
+		HandleErr(err)
 		defer f.Close()
 		_, err = f.WriteString("\n" + data)
-		handleErr(err)
+		HandleErr(err)
 	}
 	return true
 }
 
-func handleErr(err error) {
+func HandleErr(err error) {
 	if err != nil {
 		log.Println("Encountered an error while running gi_gen:")
 		log.Fatalln(err)
 	}
 }
 
-func insert[T any](a []T, i int, item T) []T {
+func Insert[T any](a []T, i int, item T) []T {
 	return append(a[:i], append([]T{item}, a[i:]...)...)
 }
 
-func contains[T comparable](list []T, item T) bool {
+func Contains[T comparable](list []T, item T) bool {
 	for _, v := range list {
 		if v == item {
 			return true
@@ -91,13 +91,13 @@ func contains[T comparable](list []T, item T) bool {
 	return false
 }
 
-func ternary[T any](cond bool, whenTrue T, whenFalse T) T {
+func Ternary[T any](cond bool, whenTrue T, whenFalse T) T {
 	if cond {
 		return whenTrue
 	}
 	return whenFalse
 }
 
-func toS[T any](obj T) string {
+func ToString[T any](obj T) string {
 	return fmt.Sprint(obj)
 }
