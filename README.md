@@ -1,4 +1,4 @@
-<h1>Gitignore File Generator</h1>
+<h1>GI Gen - Gitignore File Generator</h1>
 
 <details>
 <summary>Table of Contents</summary>
@@ -13,7 +13,8 @@
 <hr />
 
 GI Gen is an open source CLI to generate `.gitignore` files. It is completely cross-platform, and
-standalone (no dependencies), so you may literally use it for any project on any platform.
+standalone (no dependencies - other than `git` itself), so you may literally use it for any project
+on any platform.
 
 You can run this CLI program to create or append a `.gitignore` file from a chosen list of template
 easily.
@@ -35,19 +36,22 @@ $ gi_gen
 
 ## Features
 
-GI Gen does the following things:
+GI Gen supports the following features:
 
-- Discovers any gitignore templates that might be related to your project (optional, otherwise lists
-  all available templates)
-- Optionally clean up results from any patterns that aren't in your project
-- Writes to .gitignore (if a file already exists, you may append to it instead)
+- `.gitignore` discovery:
+  - Auto-discover any gitignore templates that might be related to your project
+  - Optionally list all available templates instead (see [github/gitignore][gh-gi] for the complete
+    list of templates)
+- `.gitignore` clean: Clean up results from any patterns that aren't in your project before
+  outputting (optional)
+- Writes to `.gitignore` file in current directory (you may overwrite/skip/append if already exists)
 
-Credits to [open-source-ideas][osi] for the idea for the application.
+Credits to [open-source-ideas][osi] for the idea for the tool.
 
 ## Known Bugs
 
-I am still working on getting the compiling actions to work. For now, if the binary doesn't work for
-you, try installing via `go install`, if you have Go lang tools installed.
+If the binary doesn't work for you, try installing via `go install`, if you have Go lang tools
+installed.
 
 ```shell
 go install github.com/chenasraf/gi_gen
@@ -59,7 +63,8 @@ Or clone this repository and install directly from source.
 
 Please feel free to open PRs or issues with bug fixes/reports, or feature requests.
 
-This project was built using Go, and should run easily with the normal Go tools.
+This project was built using Go, and should run easily with the normal Go tools with no further
+configuration.
 
 Testing was only done on macOS using ARM architecture, so feel free to report any issues on your
 platform if you have any, or are missing your platform and cannot/don't want to build from source (I
@@ -77,3 +82,4 @@ very much appreciated! 🙏🏼
 
 [releases]: https://github.com/chenasraf/gi_gen/releases/latest
 [osi]: https://github.com/open-source-ideas/ideas/issues/296
+[gh-gi]: https://github.com/github/gitignore
