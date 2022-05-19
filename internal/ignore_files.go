@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -20,8 +21,7 @@ func PrepareGitignores() ([]string, error) {
 
 	if GetNeedsUpdate() {
 		log.Println("Updating gitignore files...")
-		RunCmd("git", "pull", "origin", "master")
-		os.RemoveAll(filepath.Join(gitignoresDir, ".git"))
+		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "master")
 	}
 
 	return GetGitignores(gitignoresDir)
@@ -29,12 +29,29 @@ func PrepareGitignores() ([]string, error) {
 
 func GetCacheDir() string {
 	homeDir, _ := os.UserHomeDir()
-	gitignoresDir := filepath.Join(homeDir, ".github.gitignore")
-	return gitignoresDir
+	return filepath.Join(homeDir, ".github.gitignore")
 }
 
 func GetGitignores(sourceDir string) ([]string, error) {
 	return filepath.Glob(filepath.Join(sourceDir, "*.gitignore"))
+}
+
+func GetNeedsUpdate() bool {
+	gitignoresDir := GetCacheDir()
+	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-parse", "@").Output()
+	baseBytes, baseErr := exec.Command("git", "-C", gitignoresDir, "merge-base", "@", "@{u}").Output()
+	if localErr != nil {
+		log.Fatal(localErr)
+		os.Exit(1)
+	}
+	if baseErr != nil {
+		log.Fatal(baseErr)
+		os.Exit(1)
+	}
+	localStr := string(localBytes)
+	baseStr := string(baseBytes)
+
+	return localStr == baseStr
 }
 
 var ignoreLines = []string{

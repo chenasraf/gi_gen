@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"os/exec"
@@ -26,23 +25,6 @@ func GlobExists(path string) bool {
 	return res != nil
 }
 
-func GetNeedsUpdate() bool {
-	localBytes, localErr := exec.Command("git", "rev-parse", "@").Output()
-	baseBytes, baseErr := exec.Command("git", "merge-base", "@", "@{u}").Output()
-	if localErr != nil {
-		log.Fatal(localErr)
-		os.Exit(1)
-	}
-	if baseErr != nil {
-		log.Fatal(baseErr)
-		os.Exit(1)
-	}
-	localStr := string(localBytes)
-	baseStr := string(baseBytes)
-
-	return localStr == baseStr
-}
-
 func RunCmd(cmd string, args ...string) (string, error) {
 	res, err := exec.Command(cmd, args...).Output()
 	return string(res), err
@@ -58,9 +40,8 @@ func WriteFile(path string, data string, overwrite bool) bool {
 	var err error
 	if overwrite {
 		// os.Create(path)
-		err = os.WriteFile(path, []byte(data), fs.ModeAppend)
+		err = os.WriteFile(path, []byte(data), 0644)
 		HandleErr(err)
-
 	} else {
 		f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		HandleErr(err)
