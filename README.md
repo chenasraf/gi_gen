@@ -5,7 +5,6 @@
 
 - [Usage](#usage)
 - [Features](#features)
-- [Known Bugs](#known-bugs)
 - [Contribute](#contribute)
 
 </details>
@@ -47,17 +46,6 @@ GI Gen supports the following features:
 - Writes to `.gitignore` file in current directory (you may overwrite/skip/append if already exists)
 
 Credits to [open-source-ideas][osi] for the idea for the tool.
-
-## Known Bugs
-
-If the binary doesn't work for you, try installing via `go install`, if you have Go lang tools
-installed.
-
-```shell
-go install github.com/chenasraf/gi_gen
-```
-
-Or clone this repository and install directly from source.
 
 ## Contribute
 
