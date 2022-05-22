@@ -82,3 +82,24 @@ func Ternary[T any](cond bool, whenTrue T, whenFalse T) T {
 func ToString[T any](obj T) string {
 	return fmt.Sprint(obj)
 }
+
+func HandleFileOverwrite(path string, contents string) {
+	overwriteSelection := AskOverwrite()
+	switch overwriteSelection {
+	case "":
+		Quit()
+		break
+	case "Overwrite":
+		log.Printf("Writing to %s", path)
+		WriteFile(path, contents, true)
+		break
+	case "Append":
+		log.Printf("Appending to %s", path)
+		WriteFile(path, contents, false)
+		break
+	}
+}
+
+func Quit() {
+	os.Exit(1)
+}

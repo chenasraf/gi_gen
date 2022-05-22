@@ -17,14 +17,19 @@ func PrepareGitignores() ([]string, error) {
 	if !FileExists(gitignoresDir) {
 		log.Println("Getting gitignore files...")
 		RunCmd("git", "clone", "--depth=1", repoUrl, gitignoresDir)
-	}
-
-	if GetNeedsUpdate() {
+	} else if GetNeedsUpdate() {
 		log.Println("Updating gitignore files...")
 		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "master")
 	}
 
 	return GetGitignores(gitignoresDir)
+}
+
+func RemoveCacheDir() {
+	cacheDir := GetCacheDir()
+	log.Printf("Removing cache directory: %s...\n", cacheDir)
+	os.RemoveAll(cacheDir)
+	log.Println("Done")
 }
 
 func GetCacheDir() string {
@@ -75,10 +80,12 @@ func FindFileMatches(patterns string) bool {
 			continue
 		}
 		idx := strings.Index(line, "#")
+
 		// ignore comments at end of line
 		if idx > -1 && (idx == 0 || line[idx-1] != '\\') {
 			line = strings.TrimSpace(line[0:idx])
 		}
+
 		if len(line) == 0 || Contains(ignoreLines, line) {
 			continue
 		}
@@ -166,7 +173,7 @@ func GetLanguageSelections(files map[string]string, fileNames []string) ([]strin
 	return selected, selectedKeys
 }
 
-func GetRelevantFiles(allFiles []string) ([]string, map[string]string) {
+func DiscoverRelevantFiles(allFiles []string) ([]string, map[string]string) {
 	files := make(map[string]string)
 	fileNames := []string{}
 
@@ -199,20 +206,20 @@ func LangHeader(langName string) string {
 
 func GetAllRaw(selected []string, selectedKeys []string) string {
 	for i, selection := range selected {
-		header := LangHeader(selectedKeys[i])
+		header := Ternary(len(selected) > 1, LangHeader(selectedKeys[i]), "")
 		selected[i] = header + selection
 	}
 	return strings.Join(selected, "\n")
 }
 
-func CleanupMultiple(selected []string, keys []string) string {
+func CleanupMultipleFiles(files []string, langKeys []string) string {
 	out := []string{}
-	for i, selection := range selected {
+	for i, selection := range files {
 		cleanSelection := RemoveUnusedPatterns(selection)
 		if strings.TrimSpace(cleanSelection) == "" {
 			continue
 		}
-		header := LangHeader(keys[i])
+		header := LangHeader(langKeys[i])
 		prefixNewline := Ternary(i > 0, "\n", "")
 		contents := prefixNewline + header + cleanSelection
 		out = append(out, contents)
