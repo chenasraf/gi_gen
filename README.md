@@ -3,7 +3,8 @@
 <details>
 <summary>Table of Contents</summary>
 
-- [Usage](#usage)
+- [Command Line Usage](#command-line-usage)
+  - [Command Line Flags](#command-line-flags)
 - [Features](#features)
 - [Contribute](#contribute)
 
@@ -20,7 +21,7 @@ easily.
 
 You may choose more than one template to generate.
 
-## Usage
+## Command Line Usage
 
 Download the file for your platform in the [Releases page][releases].
 
@@ -32,6 +33,15 @@ Just run `gi_gen` in the directory you wish to add to and follow the prompts.
 ```shell
 $ gi_gen
 ```
+
+### Command Line Flags
+
+You may pass additional flags to `gi_gen`. These are the currently available flags:
+
+| Usage          | Description                                                       |
+| -------------- | ----------------------------------------------------------------- |
+| `-clean-cache` | Allows you to remove the contents of the gitignore template cache |
+| `-help`        | Prints usage information                                          |
 
 ## Features
 
