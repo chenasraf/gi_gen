@@ -64,7 +64,7 @@ Please feel free to open PRs or issues with bug fixes/reports, or feature reques
 This project was built using Go, and should run easily with the normal Go tools with no further
 configuration.
 
-Testing was only done on macOS using ARM architecture, so feel free to report any issues on your
+Testing was only done on Windows x386 and macOS ARM, so feel free to report any issues on your
 platform if you have any, or are missing your platform and cannot/don't want to build from source (I
 tried building for the most common platforms).
 
