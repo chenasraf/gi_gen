@@ -10,34 +10,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func prepareGitignores() ([]string, error) {
-	gitignoresDir := getCacheDir()
-
-	if !FileExists(gitignoresDir) {
-		fmt.Println("Getting gitignore files...")
-		RunCmd("git", "clone", "--depth=2", repoUrl, gitignoresDir)
-		fmt.Println()
-	} else if isCacheNeedsUpdate() {
-		fmt.Println("Updating gitignore files...")
-		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
-		fmt.Println()
-	}
-
-	return getGitignoreFiles(gitignoresDir)
-}
-
-func RemoveCacheDir() {
-	cacheDir := getCacheDir()
-	fmt.Printf("Removing cache directory: %s...\n", cacheDir)
-	os.RemoveAll(cacheDir)
-	fmt.Println("Done")
-}
-
-func getCacheDir() string {
-	homeDir, _ := os.UserHomeDir()
-	return filepath.Join(homeDir, ".github.gitignore")
-}
-
 func getGitignoreFiles(sourceDir string) ([]string, error) {
 	return filepath.Glob(filepath.Join(sourceDir, "*.gitignore"))
 }
@@ -151,7 +123,7 @@ func gatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []
 	return keep
 }
 
-func getLanguageSelections(files map[string]string, fileNames []string) ([]string, []string) {
+func getLanguages(files map[string]string, fileNames []string) ([]string, []string) {
 	selected := []string{}
 	allKeys := maps.Keys(files)
 	selectedKeys := maps.Keys(files)

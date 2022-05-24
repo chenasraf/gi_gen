@@ -7,9 +7,6 @@ import (
 	"path/filepath"
 )
 
-// UNUSED allows unused variables to be included in Go programs
-func UNUSED(x ...interface{}) {}
-
 var repoUrl = "https://github.com/github/gitignore"
 
 func FileExists(path string) bool {
@@ -102,6 +99,7 @@ func HandleFileOverwrite(path string, contents string) {
 func KeyInterrupt() {
 	Quit("KeyInterrupt: Quitting")
 }
+
 func Quit(message string) {
 	fmt.Println()
 	fmt.Println(message)

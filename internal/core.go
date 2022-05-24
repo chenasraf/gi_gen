@@ -11,12 +11,12 @@ func GIGen() {
 	handleErr(err)
 
 	outFile := filepath.Join(wd, ".gitignore")
-	allFiles, err := prepareGitignores()
+	allFiles, err := initCache()
 	handleErr(err)
 
 	fileNames, files := autoDiscover(allFiles)
 
-	selected, selectedKeys := getLanguageSelections(files, fileNames)
+	selected, selectedKeys := getLanguages(files, fileNames)
 	cleanupSelection := AskCleanup()
 	outContents := Ternary(cleanupSelection, cleanupMultipleFiles(selected, selectedKeys), getAllRaw(selected, selectedKeys))
 
