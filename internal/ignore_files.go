@@ -164,38 +164,15 @@ func GetLanguageSelections(files map[string]string, fileNames []string) ([]strin
 	allKeys := maps.Keys(files)
 	selectedKeys := maps.Keys(files)
 
-	if len(allKeys) > 1 {
+	if len(allKeys) == 0 {
+		selected = []string{}
+	} else if len(allKeys) > 1 {
 		selected, selectedKeys = AskLanguage(fileNames, selected, files)
 	} else {
 		selected = []string{files[allKeys[0]]}
 	}
 
 	return selected, selectedKeys
-}
-
-func DiscoverRelevantFiles(allFiles []string) ([]string, map[string]string) {
-	files := make(map[string]string)
-	fileNames := []string{}
-
-	answer := AskDiscovery()
-
-	for _, filename := range allFiles {
-		contents := ReadFile(filename)
-		basename := filepath.Base(filename)
-		langName := basename[:strings.Index(basename, ".")]
-
-		if answer {
-			if FindFileMatches(contents) {
-				files[langName] = contents
-				fileNames = append(fileNames, langName)
-			}
-		} else {
-			files[langName] = contents
-			fileNames = append(fileNames, langName)
-		}
-	}
-
-	return fileNames, files
 }
 
 func LangHeader(langName string) string {
@@ -219,7 +196,7 @@ func CleanupMultipleFiles(files []string, langKeys []string) string {
 		if strings.TrimSpace(cleanSelection) == "" {
 			continue
 		}
-		header := LangHeader(langKeys[i])
+		header := Ternary(len(files) > 1, LangHeader(langKeys[i]), "")
 		prefixNewline := Ternary(i > 0, "\n", "")
 		contents := prefixNewline + header + cleanSelection
 		out = append(out, contents)
