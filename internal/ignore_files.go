@@ -15,10 +15,10 @@ func prepareGitignores() ([]string, error) {
 
 	if !FileExists(gitignoresDir) {
 		fmt.Println("Getting gitignore files...")
-		RunCmd("git", "clone", "--depth=1", repoUrl, gitignoresDir)
+		RunCmd("git", "clone", "--depth=2", repoUrl, gitignoresDir)
 	} else if isCacheNeedsUpdate() {
 		fmt.Println("Updating gitignore files...")
-		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "master")
+		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
 	}
 
 	return getGitignoreFiles(gitignoresDir)
@@ -42,14 +42,11 @@ func getGitignoreFiles(sourceDir string) ([]string, error) {
 
 func isCacheNeedsUpdate() bool {
 	gitignoresDir := getCacheDir()
-	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-parse", "@").Output()
+	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-list", "--count", "HEAD..@{u}").Output()
 	handleErr(localErr)
-	baseBytes, baseErr := exec.Command("git", "-C", gitignoresDir, "merge-base", "@", "@{u}").Output()
-	handleErr(baseErr)
-	localStr := string(localBytes)
-	baseStr := string(baseBytes)
+	localStr := strings.TrimSpace(string(localBytes))
 
-	return localStr == baseStr
+	return localStr != "0"
 }
 
 var ignoreLines = []string{
