@@ -9,7 +9,7 @@ import (
 )
 
 func autoDiscover(allFiles []string) ([]string, map[string]string) {
-	answer := AskDiscovery()
+	answer := askDiscovery()
 
 	if !answer {
 		return allFiles, getAllFiles(allFiles)

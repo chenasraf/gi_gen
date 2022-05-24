@@ -1,21 +1,16 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/AlecAivazis/survey/v2"
 	"golang.org/x/exp/maps"
 )
 
-func AskLanguage(fileNames []string, selected []string, files map[string]string) ([]string, []string) {
-	langPrompt := &survey.MultiSelect{
-		Message: "Please select which you want to write to .gitignore:\n",
-		Options: maps.Keys(files),
-	}
+func askLanguage(fileNames []string, selected []string, files map[string]string) ([]string, []string) {
+	fmt.Println()
+	langSelections := askMulti("Please select which you want to write to .gitignore:\n", maps.Keys(files))
 
-	var langSelections []string
-	survey.AskOne(langPrompt, &langSelections)
-	if langSelections == nil {
-		Quit()
-	}
 	keys := []string{}
 	for _, selection := range langSelections {
 		selected = append(selected, files[selection])
@@ -25,34 +20,67 @@ func AskLanguage(fileNames []string, selected []string, files map[string]string)
 	return selected, keys
 }
 
-func AskDiscovery() bool {
-	prompt := &survey.Confirm{
-		Message: "Would you like to try to scan for available templates automatically?\n" +
-			"Select 'No' ('n') to see all available templates",
-		Default: true,
-	}
-	var answer bool
-	survey.AskOne(prompt, &answer)
-	return answer
+func askDiscovery() bool {
+	return askYesNo("Would you like to try to scan for available templates automatically?\n" +
+		"Select 'No' to see all available templates")
 }
 
 func AskOverwrite() string {
-	overwritePrompt := &survey.Select{
-		Message: ".gitignore file found in this directory. Please pick an option:",
-		Options: []string{"Overwrite", "Append", "Skip"},
-	}
-	overwriteSelection := ""
-	survey.AskOne(overwritePrompt, &overwriteSelection)
-	return overwriteSelection
+	fmt.Println()
+	return askSelection(
+		".gitignore file found in this directory. Please pick an option:",
+		[]string{"Overwrite", "Append", "Skip"},
+	)
 }
 
 func AskCleanup() bool {
-	cleanupPrompt := &survey.Confirm{
-		Message: "Do you want to remove patterns not existing in your project?\nThis might produce incomplete files on new projects.",
-		Default: false,
+	fmt.Println()
+	return askYesNo("Do you want to remove patterns not existing in your project?\nThis might produce incomplete files on new projects.")
+}
+
+func askYesNo(message string) bool {
+	prompt := &survey.Select{
+		Message: message,
+		Default: "Yes",
+		Options: []string{"Yes", "No"},
+	}
+	answer := ""
+	survey.AskOne(prompt, &answer)
+	if answer == "" {
+		KeyInterrupt()
 	}
 
-	var cleanupSelection bool
-	survey.AskOne(cleanupPrompt, &cleanupSelection)
-	return cleanupSelection
+	return answer == "Yes"
+}
+
+func askMulti(message string, options []string) []string {
+	langPrompt := &survey.MultiSelect{
+		Message: message,
+		Options: options,
+	}
+
+	var selections []string
+	survey.AskOne(langPrompt, &selections)
+
+	if selections == nil {
+		KeyInterrupt()
+	}
+
+	return selections
+}
+
+func askSelection(message string, options []string) string {
+	langPrompt := &survey.Select{
+		Message: message,
+		Options: options,
+	}
+
+	selection := ""
+	survey.AskOne(langPrompt, &selection)
+
+	if selection == "" {
+		KeyInterrupt()
+	}
+
+	return selection
 }

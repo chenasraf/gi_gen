@@ -23,9 +23,11 @@ func GIGen() {
 	if FileExists(outFile) {
 		HandleFileOverwrite(outFile, outContents)
 	} else {
+		fmt.Println()
 		fmt.Printf("Writing to %s\n", outFile)
 		WriteFile(outFile, outContents, true)
 	}
 
+	fmt.Println()
 	fmt.Println("Done.")
 }

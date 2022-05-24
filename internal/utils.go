@@ -86,7 +86,7 @@ func HandleFileOverwrite(path string, contents string) {
 	overwriteSelection := AskOverwrite()
 	switch overwriteSelection {
 	case "":
-		Quit()
+		KeyInterrupt()
 		break
 	case "Overwrite":
 		fmt.Printf("Writing to %s\n", path)
@@ -99,6 +99,7 @@ func HandleFileOverwrite(path string, contents string) {
 	}
 }
 
-func Quit() {
+func KeyInterrupt() {
+	fmt.Println("KeyInterrupt: Quitting")
 	os.Exit(1)
 }

@@ -16,9 +16,11 @@ func prepareGitignores() ([]string, error) {
 	if !FileExists(gitignoresDir) {
 		fmt.Println("Getting gitignore files...")
 		RunCmd("git", "clone", "--depth=2", repoUrl, gitignoresDir)
+		fmt.Println()
 	} else if isCacheNeedsUpdate() {
 		fmt.Println("Updating gitignore files...")
 		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
+		fmt.Println()
 	}
 
 	return getGitignoreFiles(gitignoresDir)
@@ -153,14 +155,14 @@ func getLanguageSelections(files map[string]string, fileNames []string) ([]strin
 	selected := []string{}
 	allKeys := maps.Keys(files)
 	selectedKeys := maps.Keys(files)
-
+	fmt.Println()
 	if len(allKeys) == 0 {
 		fmt.Println("Found no templates. Quitting.")
 		os.Exit(1)
 	} else if len(allKeys) > 1 {
 		fmt.Println("Found " + fmt.Sprint(len(fileNames)) +
 			" possible matches in your project for gitignore files.")
-		selected, selectedKeys = AskLanguage(fileNames, selected, files)
+		selected, selectedKeys = askLanguage(fileNames, selected, files)
 	} else {
 		fmt.Printf("Found one match for your project: %s. Proceeding...\n", allKeys[0])
 		selected = []string{files[allKeys[0]]}
