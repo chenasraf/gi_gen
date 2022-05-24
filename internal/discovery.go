@@ -57,16 +57,15 @@ func discoverByExplicitProjectType() map[string]string {
 
 	discoveryMap := make(map[string]string)
 	discoveryMap["package.json"] = "Node"
-	discoveryMap["tsconfig.json"] = "Node"
-	discoveryMap["jsconfig.json"] = "Node"
-	discoveryMap["setup.py"] = "Python"
-	discoveryMap["__init__.py"] = "Python"
-	discoveryMap["lib/main.dart"] = "Dart"
-	discoveryMap["pubspec.yaml"] = "Dart"
-	discoveryMap["pubspec.yml"] = "Dart"
-	discoveryMap["go.mod"] = "Go"
-	discoveryMap["go.sum"] = "Go"
-	discoveryMap["main.go"] = "Go"
+	discoveryMap["[tj]sconfig.json"] = "Node"
+	discoveryMap["{setup,__init__}.py"] = "Python"
+	discoveryMap["*.dart"] = "Dart"
+	discoveryMap["pubspec.ya?ml"] = "Dart"
+	discoveryMap["go.{mod,sum}"] = "Go"
+	discoveryMap["*.go"] = "Go"
+	discoveryMap["*.unity"] = "Unity"
+	discoveryMap["*.rb"] = "Ruby"
+	discoveryMap["Gemfile"] = "Ruby"
 
 	results := make(map[string]string)
 
@@ -76,7 +75,7 @@ func discoverByExplicitProjectType() map[string]string {
 		checkFile := filepath.Join(wd, key)
 
 		_, keyExists := results[langName]
-		if !keyExists && FileExists(checkFile) {
+		if !keyExists && GlobExists(checkFile) {
 			results[langName] = ReadFile(ignoreFile)
 		}
 	}
