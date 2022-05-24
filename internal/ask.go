@@ -1,17 +1,14 @@
 package internal
 
 import (
-	"fmt"
-
 	"github.com/AlecAivazis/survey/v2"
+	"golang.org/x/exp/maps"
 )
 
 func AskLanguage(fileNames []string, selected []string, files map[string]string) ([]string, []string) {
 	langPrompt := &survey.MultiSelect{
-		Message: "Found " + fmt.Sprint(len(fileNames)) +
-			" possible matches in your project for gitignore files.\n" +
-			"Please select which you want to write to .gitignore:\n",
-		Options: fileNames,
+		Message: "Please select which you want to write to .gitignore:\n",
+		Options: maps.Keys(files),
 	}
 
 	var langSelections []string

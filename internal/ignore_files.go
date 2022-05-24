@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -11,48 +10,42 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func PrepareGitignores() ([]string, error) {
-	gitignoresDir := GetCacheDir()
+func prepareGitignores() ([]string, error) {
+	gitignoresDir := getCacheDir()
 
 	if !FileExists(gitignoresDir) {
-		log.Println("Getting gitignore files...")
+		fmt.Println("Getting gitignore files...")
 		RunCmd("git", "clone", "--depth=1", repoUrl, gitignoresDir)
-	} else if GetNeedsUpdate() {
-		log.Println("Updating gitignore files...")
+	} else if isCacheNeedsUpdate() {
+		fmt.Println("Updating gitignore files...")
 		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "master")
 	}
 
-	return GetGitignores(gitignoresDir)
+	return getGitignoreFiles(gitignoresDir)
 }
 
 func RemoveCacheDir() {
-	cacheDir := GetCacheDir()
-	log.Printf("Removing cache directory: %s...\n", cacheDir)
+	cacheDir := getCacheDir()
+	fmt.Printf("Removing cache directory: %s...\n", cacheDir)
 	os.RemoveAll(cacheDir)
-	log.Println("Done")
+	fmt.Println("Done")
 }
 
-func GetCacheDir() string {
+func getCacheDir() string {
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, ".github.gitignore")
 }
 
-func GetGitignores(sourceDir string) ([]string, error) {
+func getGitignoreFiles(sourceDir string) ([]string, error) {
 	return filepath.Glob(filepath.Join(sourceDir, "*.gitignore"))
 }
 
-func GetNeedsUpdate() bool {
-	gitignoresDir := GetCacheDir()
+func isCacheNeedsUpdate() bool {
+	gitignoresDir := getCacheDir()
 	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-parse", "@").Output()
+	handleErr(localErr)
 	baseBytes, baseErr := exec.Command("git", "-C", gitignoresDir, "merge-base", "@", "@{u}").Output()
-	if localErr != nil {
-		log.Fatal(localErr)
-		os.Exit(1)
-	}
-	if baseErr != nil {
-		log.Fatal(baseErr)
-		os.Exit(1)
-	}
+	handleErr(baseErr)
 	localStr := string(localBytes)
 	baseStr := string(baseBytes)
 
@@ -68,7 +61,7 @@ var ignoreLines = []string{
 	".idea/*",
 }
 
-func FindFileMatches(patterns string) bool {
+func findPatternFileMatches(patterns string) bool {
 	lines := strings.Split(patterns, "\n")
 	wd, _ := os.Getwd()
 
@@ -99,7 +92,7 @@ func FindFileMatches(patterns string) bool {
 
 var patternCache []string = []string{}
 
-func RemoveUnusedPatterns(contents string) string {
+func removeUnusedPatterns(contents string) string {
 	wd, _ := os.Getwd()
 	lines := strings.Split(contents, "\n")
 	keep := []string{}
@@ -120,7 +113,7 @@ func RemoveUnusedPatterns(contents string) string {
 			patternCache = append(patternCache, trimmed)
 
 			if i > 0 {
-				keep = GatherPreviousCommentGroup(i, lastTakenIdx, lines, keep)
+				keep = gatherPreviousCommentGroup(i, lastTakenIdx, lines, keep)
 			}
 
 			keep = append(keep, line)
@@ -130,7 +123,7 @@ func RemoveUnusedPatterns(contents string) string {
 	return strings.Join(keep, "\n")
 }
 
-func GatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []string) []string {
+func gatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []string) []string {
 	j := 1
 	foundComment := false
 	comments := []string{}
@@ -159,44 +152,48 @@ func GatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []
 	return keep
 }
 
-func GetLanguageSelections(files map[string]string, fileNames []string) ([]string, []string) {
+func getLanguageSelections(files map[string]string, fileNames []string) ([]string, []string) {
 	selected := []string{}
 	allKeys := maps.Keys(files)
 	selectedKeys := maps.Keys(files)
 
 	if len(allKeys) == 0 {
-		selected = []string{}
+		fmt.Println("Found no templates. Quitting.")
+		os.Exit(1)
 	} else if len(allKeys) > 1 {
+		fmt.Println("Found " + fmt.Sprint(len(fileNames)) +
+			" possible matches in your project for gitignore files.")
 		selected, selectedKeys = AskLanguage(fileNames, selected, files)
 	} else {
+		fmt.Printf("Found one match for your project: %s. Proceeding...\n", allKeys[0])
 		selected = []string{files[allKeys[0]]}
 	}
 
 	return selected, selectedKeys
 }
 
-func LangHeader(langName string) string {
+func langHeader(langName string) string {
 	sep := "#========================================================================\n"
 	header := fmt.Sprintf(sep+"# %s\n"+sep+"\n", langName)
 	return header
 }
 
-func GetAllRaw(selected []string, selectedKeys []string) string {
+func getAllRaw(selected []string, selectedKeys []string) string {
 	for i, selection := range selected {
-		header := Ternary(len(selected) > 1, LangHeader(selectedKeys[i]), "")
+		header := Ternary(len(selected) > 1, langHeader(selectedKeys[i]), "")
 		selected[i] = header + selection
 	}
 	return strings.Join(selected, "\n")
 }
 
-func CleanupMultipleFiles(files []string, langKeys []string) string {
+func cleanupMultipleFiles(files []string, langKeys []string) string {
 	out := []string{}
 	for i, selection := range files {
-		cleanSelection := RemoveUnusedPatterns(selection)
+		cleanSelection := removeUnusedPatterns(selection)
 		if strings.TrimSpace(cleanSelection) == "" {
 			continue
 		}
-		header := Ternary(len(files) > 1, LangHeader(langKeys[i]), "")
+		header := Ternary(len(files) > 1, langHeader(langKeys[i]), "")
 		prefixNewline := Ternary(i > 0, "\n", "")
 		contents := prefixNewline + header + cleanSelection
 		out = append(out, contents)

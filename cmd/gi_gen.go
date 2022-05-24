@@ -3,11 +3,8 @@ package cmd
 import (
 	"flag"
 	"fmt"
-	"log"
-	"os"
-	"path/filepath"
 
-	. "github.com/chenasraf/gi_gen/internal"
+	"github.com/chenasraf/gi_gen/internal"
 )
 
 func RunMainCmd() {
@@ -18,7 +15,7 @@ func RunMainCmd() {
 		return
 	}
 
-	RunGIGen()
+	internal.GIGen()
 }
 
 func cleanCommand() bool {
@@ -26,7 +23,7 @@ func cleanCommand() bool {
 	flag.Parse()
 
 	if *clean {
-		RemoveCacheDir()
+		internal.RemoveCacheDir()
 		return true
 	}
 	return false
@@ -45,28 +42,4 @@ func helpCommand() {
 	}
 
 	flag.Bool("help", false, "Display help message")
-}
-
-func RunGIGen() {
-	wd, err := os.Getwd()
-	HandleErr(err)
-
-	outFile := filepath.Join(wd, ".gitignore")
-	allFiles, err := PrepareGitignores()
-	HandleErr(err)
-
-	fileNames, files := DiscoverRelevantFiles(allFiles)
-
-	log.Println("Done.")
-
-	selected, selectedKeys := GetLanguageSelections(files, fileNames)
-	cleanupSelection := AskCleanup()
-	outContents := Ternary(cleanupSelection, CleanupMultipleFiles(selected, selectedKeys), GetAllRaw(selected, selectedKeys))
-
-	if FileExists(outFile) {
-		HandleFileOverwrite(outFile, outContents)
-	} else {
-		log.Printf("Writing to %s", outFile)
-		WriteFile(outFile, outContents, true)
-	}
 }

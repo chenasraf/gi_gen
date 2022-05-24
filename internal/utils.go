@@ -2,7 +2,6 @@ package internal
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -21,7 +20,7 @@ func FileExists(path string) bool {
 
 func GlobExists(path string) bool {
 	res, err := filepath.Glob(path)
-	HandleErr(err)
+	handleErr(err)
 	return res != nil
 }
 
@@ -32,30 +31,30 @@ func RunCmd(cmd string, args ...string) (string, error) {
 
 func ReadFile(path string) string {
 	res, err := os.ReadFile(path)
-	HandleErr(err)
+	handleErr(err)
 	return string(res)
 }
 
 func WriteFile(path string, data string, overwrite bool) bool {
 	var err error
 	if overwrite {
-		// os.Create(path)
 		err = os.WriteFile(path, []byte(data), 0644)
-		HandleErr(err)
+		handleErr(err)
 	} else {
 		f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		HandleErr(err)
+		handleErr(err)
 		defer f.Close()
 		_, err = f.WriteString("\n" + data)
-		HandleErr(err)
+		handleErr(err)
 	}
 	return true
 }
 
-func HandleErr(err error) {
+func handleErr(err error) {
 	if err != nil {
-		log.Println("Encountered an error while running gi_gen:")
-		log.Fatalln(err)
+		fmt.Println("Encountered an error while running gi_gen:")
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
 
@@ -90,11 +89,11 @@ func HandleFileOverwrite(path string, contents string) {
 		Quit()
 		break
 	case "Overwrite":
-		log.Printf("Writing to %s", path)
+		fmt.Printf("Writing to %s\n", path)
 		WriteFile(path, contents, true)
 		break
 	case "Append":
-		log.Printf("Appending to %s", path)
+		fmt.Printf("Appending to %s\n", path)
 		WriteFile(path, contents, false)
 		break
 	}
