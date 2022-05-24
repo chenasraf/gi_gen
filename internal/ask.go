@@ -21,8 +21,8 @@ func askLanguage(fileNames []string, selected []string, files map[string]string)
 }
 
 func askDiscovery() bool {
-	return askYesNo("Would you like to try to scan for available templates automatically?\n" +
-		"Select 'No' to see all available templates")
+	return askYesNo("Would you like to try to scan for available templates automatically?\n"+
+		"Select 'No' to see all available templates", true)
 }
 
 func AskOverwrite() string {
@@ -30,27 +30,18 @@ func AskOverwrite() string {
 	return askSelection(
 		".gitignore file found in this directory. Please pick an option:",
 		[]string{"Overwrite", "Append", "Skip"},
+		"Overwrite",
 	)
 }
 
 func AskCleanup() bool {
 	fmt.Println()
-	return askYesNo("Do you want to remove patterns not existing in your project?\nThis might produce incomplete files on new projects.")
+	return askYesNo("Do you want to remove patterns not existing in your project?\n"+
+		"This might produce incomplete files on new projects.", false)
 }
 
-func askYesNo(message string) bool {
-	prompt := &survey.Select{
-		Message: message,
-		Default: "Yes",
-		Options: []string{"Yes", "No"},
-	}
-	answer := ""
-	survey.AskOne(prompt, &answer)
-	if answer == "" {
-		KeyInterrupt()
-	}
-
-	return answer == "Yes"
+func askYesNo(message string, defaultValue bool) bool {
+	return askSelection(message, []string{"Yes", "No"}, Ternary(defaultValue, "Yes", "No")) == "Yes"
 }
 
 func askMulti(message string, options []string) []string {
@@ -69,10 +60,11 @@ func askMulti(message string, options []string) []string {
 	return selections
 }
 
-func askSelection(message string, options []string) string {
+func askSelection(message string, options []string, defaultValue string) string {
 	langPrompt := &survey.Select{
 		Message: message,
 		Options: options,
+		Default: defaultValue,
 	}
 
 	selection := ""

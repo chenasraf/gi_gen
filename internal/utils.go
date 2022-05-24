@@ -85,21 +85,25 @@ func ToString[T any](obj T) string {
 func HandleFileOverwrite(path string, contents string) {
 	overwriteSelection := AskOverwrite()
 	switch overwriteSelection {
-	case "":
-		KeyInterrupt()
-		break
 	case "Overwrite":
+		fmt.Println()
 		fmt.Printf("Writing to %s\n", path)
 		WriteFile(path, contents, true)
 		break
 	case "Append":
+		fmt.Println()
 		fmt.Printf("Appending to %s\n", path)
 		WriteFile(path, contents, false)
 		break
 	}
+	Quit("Bad selection")
 }
 
 func KeyInterrupt() {
-	fmt.Println("KeyInterrupt: Quitting")
+	Quit("KeyInterrupt: Quitting")
+}
+func Quit(message string) {
+	fmt.Println()
+	fmt.Println(message)
 	os.Exit(1)
 }
