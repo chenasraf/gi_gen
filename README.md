@@ -38,10 +38,14 @@ $ gi_gen
 
 You may pass additional flags to `gi_gen`. These are the currently available flags:
 
-| Usage          | Description                                                       |
-| -------------- | ----------------------------------------------------------------- |
-| `-clean-cache` | Allows you to remove the contents of the gitignore template cache |
-| `-help`        | Prints usage information                                          |
+| Usage                   | Description                                                                                                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-languages` \| `-l`    | List the languages you want to use as templates.<br />To add multiple templates, use commas as separators, e.g.: `-languages Node,Python`                        |
+| `-clean-output` \| `-c` | Perform cleanup on the output .gitignore file, removing any unused patterns                                                                                      |
+| `-append` \| `-a`       | Append to .gitignore file if it already exists                                                                                                                   |
+| `-overwrite` \| `-w`    | Overwrite .gitignore file if it already exists                                                                                                                   |
+| `-clear-cache`          | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
+| `-help` \| `-h`         | Display help message                                                                                                                                             |
 
 ## Features
 
