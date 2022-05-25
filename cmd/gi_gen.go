@@ -3,6 +3,7 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/chenasraf/gi_gen/internal"
@@ -15,6 +16,11 @@ func RunMainCmd() {
 	shouldReturn := false
 
 	flag.Parse()
+
+	shouldReturn = allLanguageCommand()
+	if shouldReturn {
+		return
+	}
 
 	shouldReturn = detectLanguageCommand()
 	if shouldReturn {
@@ -48,12 +54,12 @@ var cleanOutput bool
 var keepOutput bool
 var overwriteFile bool
 var appendFile bool
-var detectLanguage bool
+var detectLanguages bool
+var allLanguages bool
 var autoDiscover bool
 
 func shorthand(msg string) string {
-	return ""
-	// return msg + " (shorthand)"
+	return msg + " (shorthand)"
 }
 
 func initFlags() {
@@ -70,6 +76,8 @@ func initFlags() {
 		"program. Exits after running, so other flags will be ignored."
 	detectLanguagesUsage := "Outputs the automatically-detected languages, separated by newlines, and exits. Useful " +
 		"for outside tools detection."
+	allLanguagesUsage := "Outputs all the available languages, separated by newlines, and exits. Useful for " +
+		"outside tools detection."
 
 	flag.Bool("help", false, "Display help message")
 	flag.BoolVar(&cleanCache, "clear-cache", false, clearCacheUsage)
@@ -89,7 +97,8 @@ func initFlags() {
 	flag.BoolVar(&appendFile, "a", false, shorthand(appendUsage))
 	flag.BoolVar(&appendFile, "append", false, appendUsage)
 
-	flag.BoolVar(&detectLanguage, "detect-languages", false, detectLanguagesUsage)
+	flag.BoolVar(&detectLanguages, "detect-languages", false, detectLanguagesUsage)
+	flag.BoolVar(&allLanguages, "all-languages", false, allLanguagesUsage)
 
 	flag.StringVar(&langsRaw, "l", langsRaw, shorthand(langsUsage))
 	flag.StringVar(&langsRaw, "languages", langsRaw, langsUsage)
@@ -118,11 +127,27 @@ func cleanCommand() bool {
 }
 
 func detectLanguageCommand() bool {
-	if detectLanguage {
+	if detectLanguages {
 		allFiles, err := internal.InitCache()
 		discovery, _ := internal.AutoDiscover(allFiles)
 		utils.HandleErr(err)
 		fmt.Println(strings.Join(discovery, "\n"))
+		return true
+	}
+	return false
+}
+
+func allLanguageCommand() bool {
+	if allLanguages {
+		allFiles, err := internal.InitCache()
+		utils.HandleErr(err)
+		out := []string{}
+		for _, fn := range allFiles {
+			basename := filepath.Base(fn)
+			langName := basename[:strings.Index(basename, ".")]
+			out = append(out, langName)
+		}
+		fmt.Println(strings.Join(out, "\n"))
 		return true
 	}
 	return false

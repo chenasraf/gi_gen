@@ -68,6 +68,7 @@ You may pass additional flags to `gi_gen`. These are the currently available fla
 | `-append` \| `-a`        | Append to .gitignore file if it already exists                                                                                                                   |
 | `-overwrite` \| `-w`     | Overwrite .gitignore file if it already exists                                                                                                                   |
 | `-detect-languages`      | Outputs the automatically-detected languages, separated by newlines, and exits. Useful for outside tools detection.                                              |
+| `-all-languages`         | Outputs all the available languages, separated by newlines, and exits. Useful for outside tools detection.                                                       |
 | `-clear-cache`           | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
 | `-help` \| `-h`          | Display help message                                                                                                                                             |
 
