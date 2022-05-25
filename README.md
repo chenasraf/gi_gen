@@ -49,6 +49,10 @@ GI Gen supports the following features:
 
 - `.gitignore` discovery:
   - Auto-discover any gitignore templates that might be related to your project
+    - Can confidently discover over
+      [50 project languages](https://github.com/chenasraf/gi_gen/issues/2) using your project
+      structure
+    - Can fall back on process of elimination using patterns in the templat
   - Optionally list all available templates instead (see [github/gitignore][gh-gi] for the complete
     list of templates)
 - `.gitignore` clean: Clean up results from any patterns that aren't in your project before
