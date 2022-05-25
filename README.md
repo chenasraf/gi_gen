@@ -3,23 +3,43 @@
 <details>
 <summary>Table of Contents</summary>
 
+- [Features](#features)
 - [Command Line Usage](#command-line-usage)
   - [Command Line Flags](#command-line-flags)
-- [Features](#features)
 - [Contribute](#contribute)
 
 </details>
 
 <hr />
 
-GI Gen is an open source CLI to generate `.gitignore` files. It is completely cross-platform, and
-standalone (no dependencies - other than `git` itself), so you may literally use it for any project
-on any platform.
+GI Gen is an open source CLI to generate `.gitignore` files for most project types.
+
+Simply run the command and follow the prompts, and your project will have a `.gitignore` file to
+match it.
+
+It is completely cross-platform, and standalone (no dependencies - other than `git` itself), so you
+may literally use it for **any project** on **any platform**.
 
 You can run this CLI program to create or append a `.gitignore` file from a chosen list of template
 easily.
 
 You may choose more than one template to generate.
+
+## Features
+
+GI Gen supports the following features:
+
+- `.gitignore` discovery:
+  - Auto-discover any gitignore templates that might be related to your project
+    - Can confidently discover over
+      [50 project languages](https://github.com/chenasraf/gi_gen/issues/2) using your project
+      structure
+    - Can fall back on process of elimination using patterns in the templat
+  - Optionally list all available templates instead (see [github/gitignore][gh-gi] for the complete
+    list of templates)
+- `.gitignore` clean: Clean up results from any patterns that aren't in your project before
+  outputting (optional)
+- Writes to `.gitignore` file in current directory (you may overwrite/skip/append if already exists)
 
 ## Command Line Usage
 
@@ -47,25 +67,9 @@ You may pass additional flags to `gi_gen`. These are the currently available fla
 | `-clear-cache`          | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
 | `-help` \| `-h`         | Display help message                                                                                                                                             |
 
-## Features
-
-GI Gen supports the following features:
-
-- `.gitignore` discovery:
-  - Auto-discover any gitignore templates that might be related to your project
-    - Can confidently discover over
-      [50 project languages](https://github.com/chenasraf/gi_gen/issues/2) using your project
-      structure
-    - Can fall back on process of elimination using patterns in the templat
-  - Optionally list all available templates instead (see [github/gitignore][gh-gi] for the complete
-    list of templates)
-- `.gitignore` clean: Clean up results from any patterns that aren't in your project before
-  outputting (optional)
-- Writes to `.gitignore` file in current directory (you may overwrite/skip/append if already exists)
+## Contribute
 
 Credits to [open-source-ideas][osi] for the idea for the tool.
-
-## Contribute
 
 Please feel free to open PRs or issues with bug fixes/reports, or feature requests.
 
