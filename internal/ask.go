@@ -25,7 +25,7 @@ func askDiscovery() bool {
 		"Select 'No' to see all available templates", true)
 }
 
-func AskOverwrite() string {
+func askOverwrite() string {
 	fmt.Println()
 	return askSelection(
 		".gitignore file found in this directory. Please pick an option:",
@@ -34,14 +34,14 @@ func AskOverwrite() string {
 	)
 }
 
-func AskCleanup() bool {
+func askCleanup() bool {
 	fmt.Println()
 	return askYesNo("Do you want to remove patterns not existing in your project?\n"+
 		"This might produce incomplete files on new projects.", false)
 }
 
 func askYesNo(message string, defaultValue bool) bool {
-	return askSelection(message, []string{"Yes", "No"}, Ternary(defaultValue, "Yes", "No")) == "Yes"
+	return askSelection(message, []string{"Yes", "No"}, ternary(defaultValue, "Yes", "No")) == "Yes"
 }
 
 func askMulti(message string, options []string) []string {
@@ -54,7 +54,7 @@ func askMulti(message string, options []string) []string {
 	survey.AskOne(langPrompt, &selections)
 
 	if selections == nil {
-		KeyInterrupt()
+		keyInterrupt()
 	}
 
 	return selections
@@ -71,7 +71,7 @@ func askSelection(message string, options []string, defaultValue string) string 
 	survey.AskOne(langPrompt, &selection)
 
 	if selection == "" {
-		KeyInterrupt()
+		keyInterrupt()
 	}
 
 	return selection

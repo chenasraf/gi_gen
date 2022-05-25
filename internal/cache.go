@@ -9,13 +9,13 @@ import (
 func initCache() ([]string, error) {
 	gitignoresDir := getCacheDir()
 
-	if !FileExists(gitignoresDir) {
+	if !fileExists(gitignoresDir) {
 		fmt.Println("Getting gitignore files...")
-		RunCmd("git", "clone", "--depth=2", repoUrl, gitignoresDir)
+		runCmd("git", "clone", "--depth=2", repoUrl, gitignoresDir)
 		fmt.Println()
 	} else if isCacheNeedsUpdate() {
 		fmt.Println("Updating gitignore files...")
-		RunCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
+		runCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
 		fmt.Println()
 	}
 

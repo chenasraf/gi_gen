@@ -17,15 +17,15 @@ func GIGen() {
 	fileNames, files := autoDiscover(allFiles)
 
 	selected, selectedKeys := getLanguages(files, fileNames)
-	cleanupSelection := AskCleanup()
-	outContents := Ternary(cleanupSelection, cleanupMultipleFiles(selected, selectedKeys), getAllRaw(selected, selectedKeys))
+	cleanupSelection := askCleanup()
+	outContents := ternary(cleanupSelection, cleanupMultipleFiles(selected, selectedKeys), getAllRaw(selected, selectedKeys))
 
-	if FileExists(outFile) {
-		HandleFileOverwrite(outFile, outContents)
+	if fileExists(outFile) {
+		handleFileOverwrite(outFile, outContents)
 	} else {
 		fmt.Println()
 		fmt.Printf("Writing to %s\n", outFile)
-		WriteFile(outFile, outContents, true)
+		writeFile(outFile, outContents, true)
 	}
 
 	fmt.Println()

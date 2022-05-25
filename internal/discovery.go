@@ -26,7 +26,7 @@ func getAllFiles(allFiles []string) map[string]string {
 	files := make(map[string]string)
 
 	for _, filename := range allFiles {
-		contents := ReadFile(filename)
+		contents := readFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
@@ -40,7 +40,7 @@ func discoverByExistingPatterns(allFiles []string) map[string]string {
 	files := make(map[string]string)
 
 	for _, filename := range allFiles {
-		contents := ReadFile(filename)
+		contents := readFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
@@ -58,6 +58,7 @@ func discoverByExplicitProjectType() map[string]string {
 	discoveryMap := make(map[string]string)
 
 	// Common workspace files
+	discoveryMap["app/manifests/AndroidManifest.xml"] = "Android"
 	discoveryMap["composer.json"] = "Composer"
 	discoveryMap["pubspec.ya?ml"] = "Dart"
 	discoveryMap["go.{mod,sum}"] = "Go"
@@ -133,8 +134,8 @@ func discoverByExplicitProjectType() map[string]string {
 		checkFile := filepath.Join(wd, key)
 
 		_, keyExists := results[langName]
-		if !keyExists && GlobExists(checkFile) {
-			results[langName] = ReadFile(ignoreFile)
+		if !keyExists && globExists(checkFile) {
+			results[langName] = readFile(ignoreFile)
 		}
 	}
 

@@ -50,10 +50,10 @@ func findPatternFileMatches(patterns string) bool {
 			line = strings.TrimSpace(line[0:idx])
 		}
 
-		if len(line) == 0 || Contains(ignoreLines, line) {
+		if len(line) == 0 || contains(ignoreLines, line) {
 			continue
 		}
-		if GlobExists(filepath.Join(wd, line)) {
+		if globExists(filepath.Join(wd, line)) {
 			return true
 		}
 	}
@@ -76,8 +76,8 @@ func removeUnusedPatterns(contents string) string {
 			continue
 		}
 
-		if GlobExists(filepath.Join(wd, trimmed)) {
-			if Contains(patternCache, trimmed) {
+		if globExists(filepath.Join(wd, trimmed)) {
+			if contains(patternCache, trimmed) {
 				continue
 			}
 
@@ -113,7 +113,7 @@ func gatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []
 			if len(cur) > 0 && cur[0] == '#' {
 				foundComment = true
 			}
-			comments = Insert(comments, 0, cur)
+			comments = insert(comments, 0, cur)
 		}
 		j++
 	}
@@ -151,7 +151,7 @@ func langHeader(langName string) string {
 
 func getAllRaw(selected []string, selectedKeys []string) string {
 	for i, selection := range selected {
-		header := Ternary(len(selected) > 1, langHeader(selectedKeys[i]), "")
+		header := ternary(len(selected) > 1, langHeader(selectedKeys[i]), "")
 		selected[i] = header + selection
 	}
 	return strings.Join(selected, "\n")
@@ -164,8 +164,8 @@ func cleanupMultipleFiles(files []string, langKeys []string) string {
 		if strings.TrimSpace(cleanSelection) == "" {
 			continue
 		}
-		header := Ternary(len(files) > 1, langHeader(langKeys[i]), "")
-		prefixNewline := Ternary(i > 0, "\n", "")
+		header := ternary(len(files) > 1, langHeader(langKeys[i]), "")
+		prefixNewline := ternary(i > 0, "\n", "")
 		contents := prefixNewline + header + cleanSelection
 		out = append(out, contents)
 	}
