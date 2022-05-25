@@ -6,6 +6,7 @@
 - [Features](#features)
 - [Command Line Usage](#command-line-usage)
   - [Command Line Flags](#command-line-flags)
+  - [Examples](#examples)
 - [Contribute](#contribute)
 
 </details>
@@ -70,6 +71,60 @@ You may pass additional flags to `gi_gen`. These are the currently available fla
 | `-clear-cache`           | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
 | `-help` \| `-h`          | Display help message                                                                                                                                             |
 
+### Examples
+
+- Run normally, prompting for every step:
+
+  ```shell
+  gi_gen
+  ```
+
+- Pre-select languages (skip prompt):
+
+  ```shell
+  gi_gen -languages Node          # One language
+  gi_gen -languages Node,Python   # Multiple languages
+  ```
+
+- Perform clean up (skip prompt):
+
+  ```shell
+  gi_gen -clean-output    # clean up
+  gi_gen -keep-output     # skip clean up
+  ```
+
+- Use auto-discovery (skip prompt):
+
+  ```shell
+  gi_gen -auto-discover
+  ```
+
+- Existing file handlers (skip prompt):
+
+  ```shell
+  gi_gen -append      # if file exists, add to end of it
+  gi_gen -overwrite   # if file exists, replace the existing content
+  ```
+
+- Combined (skip all prompts):
+
+  ```shell
+  gi_gen -d -c -a       # Use auto discovery, append and clean unused patterns
+  gi_gen -l Node -k -w  # Use passed languages, overwrite and keep unused patterns
+  ```
+
+- Clean cache directory and exit:
+
+  ```shell
+  gi_gen -clear-cache
+  ```
+
+- Detect languages and output the results, then exit:
+
+  ```shell
+  gi_gen -detect-languages
+  ```
+
 ## Contribute
 
 Credits to [open-source-ideas][osi] for the idea for the tool.
@@ -88,9 +143,9 @@ this tool, kindly consider donating any amount to help me make up for the work h
 very much appreciated! 🙏🏼
 
 <a href='https://ko-fi.com/casraf' target='_blank'>
-  <img height='36' style='border:0px;height:36px;'
-    src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3'
-    alt='Buy Me a Coffee at ko-fi.com' />
+<img height='36' style='border:0px;height:36px;'
+  src='https://cdn.ko-fi.com/cdn/kofi1.png?v=3'
+  alt='Buy Me a Coffee at ko-fi.com' />
 </a>
 
 [releases]: https://github.com/chenasraf/gi_gen/releases/latest
