@@ -5,22 +5,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/chenasraf/gi_gen/internal/utils"
 	"golang.org/x/exp/maps"
 )
 
-func autoDiscover(allFiles []string) ([]string, map[string]string) {
-	answer := askDiscovery()
-
-	if !answer {
-		baseNames := []string{}
-		for _, fn := range allFiles {
-			basename := filepath.Base(fn)
-			langName := basename[:strings.Index(basename, ".")]
-			baseNames = append(baseNames, langName)
-		}
-		return baseNames, getAllFiles(allFiles)
-	}
-
+func AutoDiscover(allFiles []string) ([]string, map[string]string) {
 	list := discoverByExplicitProjectType()
 
 	if len(list) == 0 {
@@ -30,11 +19,31 @@ func autoDiscover(allFiles []string) ([]string, map[string]string) {
 	return maps.Keys(list), list
 }
 
+func readFromSelections(allFiles []string) ([]string, map[string]string) {
+	answer := askDiscovery()
+
+	if !answer {
+		return readAllFiles(allFiles)
+	}
+
+	return AutoDiscover(allFiles)
+}
+
+func readAllFiles(allFiles []string) ([]string, map[string]string) {
+	baseNames := []string{}
+	for _, fn := range allFiles {
+		basename := filepath.Base(fn)
+		langName := basename[:strings.Index(basename, ".")]
+		baseNames = append(baseNames, langName)
+	}
+	return baseNames, getAllFiles(allFiles)
+}
+
 func getAllFiles(allFiles []string) map[string]string {
 	files := make(map[string]string)
 
 	for _, filename := range allFiles {
-		contents := readFile(filename)
+		contents := utils.ReadFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
@@ -48,7 +57,7 @@ func discoverByExistingPatterns(allFiles []string) map[string]string {
 	files := make(map[string]string)
 
 	for _, filename := range allFiles {
-		contents := readFile(filename)
+		contents := utils.ReadFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
@@ -61,7 +70,7 @@ func discoverByExistingPatterns(allFiles []string) map[string]string {
 
 func discoverByExplicitProjectType() map[string]string {
 	wd, err := os.Getwd()
-	handleErr(err)
+	utils.HandleErr(err)
 
 	discoveryMap := make(map[string]string)
 
@@ -142,8 +151,8 @@ func discoverByExplicitProjectType() map[string]string {
 		checkFile := filepath.Join(wd, key)
 
 		_, keyExists := results[langName]
-		if !keyExists && globExists(checkFile) {
-			results[langName] = readFile(ignoreFile)
+		if !keyExists && utils.GlobExists(checkFile) {
+			results[langName] = utils.ReadFile(ignoreFile)
 		}
 	}
 

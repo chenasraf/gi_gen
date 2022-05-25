@@ -4,18 +4,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/chenasraf/gi_gen/internal/utils"
 )
 
 func InitCache() ([]string, error) {
 	gitignoresDir := GetCacheDir()
 
-	if !fileExists(gitignoresDir) {
+	if !utils.FileExists(gitignoresDir) {
 		fmt.Println("Getting gitignore files...")
-		runCmd("git", "clone", "--depth=2", repoUrl, gitignoresDir)
+		utils.RunCmd("git", "clone", "--depth=2", utils.RepoUrl, gitignoresDir)
 		fmt.Println()
 	} else if isCacheNeedsUpdate() {
 		fmt.Println("Updating gitignore files...")
-		runCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
+		utils.RunCmd("git", "-C", gitignoresDir, "pull", "origin", "main")
 		fmt.Println()
 	}
 

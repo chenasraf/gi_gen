@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/chenasraf/gi_gen/internal"
+	"github.com/chenasraf/gi_gen/internal/utils"
 )
 
 func RunMainCmd() {
@@ -15,6 +16,11 @@ func RunMainCmd() {
 
 	flag.Parse()
 
+	shouldReturn = detectLanguageCommand()
+	if shouldReturn {
+		return
+	}
+
 	shouldReturn = cleanCommand()
 	if shouldReturn {
 		return
@@ -22,10 +28,13 @@ func RunMainCmd() {
 
 	flagLangs := getLangsFromArgs()
 	internal.GIGen(&internal.GIGenOptions{
-		Languages:     &flagLangs,
-		CleanOutput:   &cleanOutput,
-		OverwriteFile: &overwriteFile,
-		AppendFile:    &appendFile,
+		Languages:         &flagLangs,
+		CleanOutput:       &cleanOutput,
+		CleanOutputUsed:   isFlagPassed("clean-output") || isFlagPassed("c"),
+		OverwriteFile:     &overwriteFile,
+		OverwriteFileUsed: isFlagPassed("overwrite") || isFlagPassed("w"),
+		AppendFile:        &appendFile,
+		AppendFileUsed:    isFlagPassed("append") || isFlagPassed("a"),
 	})
 }
 
@@ -34,6 +43,7 @@ var cleanCache bool = false
 var cleanOutput bool
 var overwriteFile bool
 var appendFile bool
+var detectLanguage bool
 
 func shorthand(msg string) string {
 	return ""
@@ -41,13 +51,15 @@ func shorthand(msg string) string {
 }
 
 func initFlags() {
-	appendUsage := "Append to .gitignore file if it already exists"
 	langsUsage := "List the languages you want to use as templates.\n" +
 		"To add multiple templates, use commas as separators, e.g.: -languages Node,Python"
+	cleanOutputUsage := "Perform cleanup on the output .gitignore file, removing any unused patterns"
+	appendUsage := "Append to .gitignore file if it already exists"
+	overwriteUsage := "Overwrite .gitignore file if it already exists"
 	clearCacheUsage := "Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this " +
 		"program. Exits after running, so other flags will be ignored."
-	cleanOutputUsage := "Perform cleanup on the output .gitignore file, removing any unused patterns"
-	overwriteUsage := "Overwrite .gitignore file if it already exists"
+	detectLanguagesUsage := "Outputs the automatically-detected languages, separated by newlines, and exits. Useful " +
+		"for outside tools detection."
 
 	flag.Bool("help", false, "Display help message")
 	flag.BoolVar(&cleanCache, "clear-cache", false, clearCacheUsage)
@@ -57,8 +69,19 @@ func initFlags() {
 	flag.BoolVar(&overwriteFile, "overwrite", false, overwriteUsage)
 	flag.BoolVar(&appendFile, "a", false, shorthand(appendUsage))
 	flag.BoolVar(&appendFile, "append", false, appendUsage)
+	flag.BoolVar(&detectLanguage, "detect-languages", false, detectLanguagesUsage)
 	flag.StringVar(&langsRaw, "l", langsRaw, shorthand(langsUsage))
 	flag.StringVar(&langsRaw, "languages", langsRaw, langsUsage)
+}
+
+func isFlagPassed(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
 }
 
 func getLangsFromArgs() []string {
@@ -68,6 +91,17 @@ func getLangsFromArgs() []string {
 func cleanCommand() bool {
 	if cleanCache {
 		internal.RemoveCacheDir()
+		return true
+	}
+	return false
+}
+
+func detectLanguageCommand() bool {
+	if detectLanguage {
+		allFiles, err := internal.InitCache()
+		discovery, _ := internal.AutoDiscover(allFiles)
+		utils.HandleErr(err)
+		fmt.Println(strings.Join(discovery, "\n"))
 		return true
 	}
 	return false

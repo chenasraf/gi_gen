@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/chenasraf/gi_gen/internal/utils"
 	"golang.org/x/exp/maps"
 )
 
@@ -17,7 +18,7 @@ func getGitignoreFiles(sourceDir string) ([]string, error) {
 func isCacheNeedsUpdate() bool {
 	gitignoresDir := GetCacheDir()
 	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-list", "--count", "HEAD..@{u}").Output()
-	handleErr(localErr)
+	utils.HandleErr(localErr)
 	localStr := strings.TrimSpace(string(localBytes))
 
 	return localStr != "0"
@@ -50,10 +51,10 @@ func findPatternFileMatches(patterns string) bool {
 			line = strings.TrimSpace(line[0:idx])
 		}
 
-		if len(line) == 0 || contains(ignoreLines, line) {
+		if len(line) == 0 || utils.Contains(ignoreLines, line) {
 			continue
 		}
-		if globExists(filepath.Join(wd, line)) {
+		if utils.GlobExists(filepath.Join(wd, line)) {
 			return true
 		}
 	}
@@ -76,8 +77,8 @@ func removeUnusedPatterns(contents string) string {
 			continue
 		}
 
-		if globExists(filepath.Join(wd, trimmed)) {
-			if contains(patternCache, trimmed) {
+		if utils.GlobExists(filepath.Join(wd, trimmed)) {
+			if utils.Contains(patternCache, trimmed) {
 				continue
 			}
 
@@ -113,7 +114,7 @@ func gatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []
 			if len(cur) > 0 && cur[0] == '#' {
 				foundComment = true
 			}
-			comments = insert(comments, 0, cur)
+			comments = utils.Insert(comments, 0, cur)
 		}
 		j++
 	}
@@ -151,7 +152,7 @@ func langHeader(langName string) string {
 
 func getAllRaw(selected []string, selectedKeys []string) string {
 	for i, selection := range selected {
-		header := ternary(len(selected) > 1, langHeader(selectedKeys[i]), "")
+		header := utils.Ternary(len(selected) > 1, langHeader(selectedKeys[i]), "")
 		selected[i] = header + selection
 	}
 	return strings.Join(selected, "\n")
@@ -164,8 +165,8 @@ func cleanupMultipleFiles(files []string, langKeys []string) string {
 		if strings.TrimSpace(cleanSelection) == "" {
 			continue
 		}
-		header := ternary(len(files) > 1, langHeader(langKeys[i]), "")
-		prefixNewline := ternary(i > 0, "\n", "")
+		header := utils.Ternary(len(files) > 1, langHeader(langKeys[i]), "")
+		prefixNewline := utils.Ternary(i > 0, "\n", "")
 		contents := prefixNewline + header + cleanSelection
 		out = append(out, contents)
 	}
