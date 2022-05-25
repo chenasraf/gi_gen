@@ -63,6 +63,7 @@ You may pass additional flags to `gi_gen`. These are the currently available fla
 | `-languages` \| `-l`     | List the languages you want to use as templates.<br />To add multiple templates, use commas as separators, e.g.: `-languages Node,Python`                        |
 | `-auto-discover` \| `-d` | Use auto-discovery for project, detecting the project type and using the result as the pre-selected template list.                                               |
 | `-clean-output` \| `-c`  | Perform cleanup on the output .gitignore file, removing any unused patterns                                                                                      |
+| `-keep-output` \| `-k`   | Do not perform cleanup on the output .gitignore file, keep all the original contents                                                                             |
 | `-append` \| `-a`        | Append to .gitignore file if it already exists                                                                                                                   |
 | `-overwrite` \| `-w`     | Overwrite .gitignore file if it already exists                                                                                                                   |
 | `-detect-languages`      | Outputs the automatically-detected languages, separated by newlines, and exits. Useful for outside tools detection.                                              |

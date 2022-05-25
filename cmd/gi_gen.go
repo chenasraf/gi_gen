@@ -29,13 +29,15 @@ func RunMainCmd() {
 	flagLangs := getLangsFromArgs()
 	internal.GIGen(&internal.GIGenOptions{
 		Languages:         &flagLangs,
-		AutoDiscover:      &autoDiscover,
+		AutoDiscover:      autoDiscover,
 		AutoDiscoverUsed:  isFlagPassed("auto-discover") || isFlagPassed("d"),
-		CleanOutput:       &cleanOutput,
+		CleanOutput:       cleanOutput,
 		CleanOutputUsed:   isFlagPassed("clean-output") || isFlagPassed("c"),
-		OverwriteFile:     &overwriteFile,
+		KeepOutput:        keepOutput,
+		KeepOutputUsed:    isFlagPassed("keep-output") || isFlagPassed("k"),
+		OverwriteFile:     overwriteFile,
 		OverwriteFileUsed: isFlagPassed("overwrite") || isFlagPassed("w"),
-		AppendFile:        &appendFile,
+		AppendFile:        appendFile,
 		AppendFileUsed:    isFlagPassed("append") || isFlagPassed("a"),
 	})
 }
@@ -43,6 +45,7 @@ func RunMainCmd() {
 var langsRaw string = ""
 var cleanCache bool
 var cleanOutput bool
+var keepOutput bool
 var overwriteFile bool
 var appendFile bool
 var detectLanguage bool
@@ -59,6 +62,8 @@ func initFlags() {
 	autoDiscoverUsage := "Use auto-discovery for project, detecting the project type and using the result as the pre-" +
 		"selected template list."
 	cleanOutputUsage := "Perform cleanup on the output .gitignore file, removing any unused patterns"
+	keepOutputUsage := "Do not perform cleanup on the output .gitignore file, keep all the original contents " +
+		"(opposite of -clean-output)"
 	appendUsage := "Append to .gitignore file if it already exists"
 	overwriteUsage := "Overwrite .gitignore file if it already exists"
 	clearCacheUsage := "Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this " +
@@ -74,6 +79,9 @@ func initFlags() {
 
 	flag.BoolVar(&cleanOutput, "c", false, shorthand(cleanOutputUsage))
 	flag.BoolVar(&cleanOutput, "clean-output", false, cleanOutputUsage)
+
+	flag.BoolVar(&keepOutput, "k", false, shorthand(keepOutputUsage))
+	flag.BoolVar(&keepOutput, "keep-output", false, keepOutputUsage)
 
 	flag.BoolVar(&overwriteFile, "w", false, shorthand(overwriteUsage))
 	flag.BoolVar(&overwriteFile, "overwrite", false, overwriteUsage)

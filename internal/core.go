@@ -12,13 +12,15 @@ import (
 
 type GIGenOptions struct {
 	Languages         *[]string
-	CleanOutput       *bool
+	CleanOutput       bool
 	CleanOutputUsed   bool
-	AutoDiscover      *bool
+	KeepOutput        bool
+	KeepOutputUsed    bool
+	AutoDiscover      bool
 	AutoDiscoverUsed  bool
-	OverwriteFile     *bool
+	OverwriteFile     bool
 	OverwriteFileUsed bool
-	AppendFile        *bool
+	AppendFile        bool
 	AppendFileUsed    bool
 }
 
@@ -80,8 +82,8 @@ func processFileOutput(cleanupSelection bool, selectedContents []string, selecte
 
 func getCleanupSelection(opts GIGenOptions) bool {
 	var cleanupSelection bool
-	if opts.CleanOutputUsed {
-		cleanupSelection = *opts.CleanOutput
+	if opts.CleanOutputUsed || opts.KeepOutput {
+		cleanupSelection = opts.CleanOutput && !opts.KeepOutput
 	} else {
 		cleanupSelection = askCleanup()
 	}

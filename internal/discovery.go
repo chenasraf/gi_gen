@@ -21,8 +21,8 @@ func AutoDiscover(allFiles []string) ([]string, map[string]string) {
 
 func readFromSelections(allFiles []string, opts GIGenOptions) ([]string, map[string]string) {
 	var answer bool
-	if opts.AutoDiscoverUsed && *opts.AutoDiscover {
-		answer = *opts.AutoDiscover
+	if opts.AutoDiscoverUsed && opts.AutoDiscover {
+		answer = opts.AutoDiscover
 	} else {
 		answer = askDiscovery()
 	}
