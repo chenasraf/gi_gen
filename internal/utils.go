@@ -79,22 +79,21 @@ func toString[T any](obj T) string {
 	return fmt.Sprint(obj)
 }
 
-func handleFileOverwrite(path string, contents string) {
-	overwriteSelection := askOverwrite()
-	switch overwriteSelection {
+func handleFileOverwrite(path string, contents string, selection string) {
+	switch selection {
 	case "Skip":
 		quit("Nothing to do, exiting")
-		break
+		return
 	case "Overwrite":
 		fmt.Println()
 		fmt.Printf("Writing to %s\n", path)
 		writeFile(path, contents, true)
-		break
+		return
 	case "Append":
 		fmt.Println()
 		fmt.Printf("Appending to %s\n", path)
 		writeFile(path, contents, false)
-		break
+		return
 	}
 	quit("Bad selection")
 }

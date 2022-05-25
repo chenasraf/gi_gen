@@ -15,7 +15,7 @@ func getGitignoreFiles(sourceDir string) ([]string, error) {
 }
 
 func isCacheNeedsUpdate() bool {
-	gitignoresDir := getCacheDir()
+	gitignoresDir := GetCacheDir()
 	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-list", "--count", "HEAD..@{u}").Output()
 	handleErr(localErr)
 	localStr := strings.TrimSpace(string(localBytes))
@@ -124,7 +124,7 @@ func gatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []
 }
 
 func getLanguages(files map[string]string, fileNames []string) ([]string, []string) {
-	selected := []string{}
+	selectedContents := []string{}
 	allKeys := maps.Keys(files)
 	selectedKeys := maps.Keys(files)
 	fmt.Println()
@@ -134,13 +134,13 @@ func getLanguages(files map[string]string, fileNames []string) ([]string, []stri
 	} else if len(allKeys) > 1 {
 		fmt.Println("Found " + fmt.Sprint(len(fileNames)) +
 			" possible matches in your project for gitignore files.")
-		selected, selectedKeys = askLanguage(fileNames, selected, files)
+		selectedContents, selectedKeys = askLanguage(fileNames, selectedContents, files)
 	} else {
 		fmt.Printf("Found one match for your project: %s. Proceeding...\n", allKeys[0])
-		selected = []string{files[allKeys[0]]}
+		selectedContents = []string{files[allKeys[0]]}
 	}
 
-	return selected, selectedKeys
+	return selectedContents, selectedKeys
 }
 
 func langHeader(langName string) string {

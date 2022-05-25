@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 )
 
-func initCache() ([]string, error) {
-	gitignoresDir := getCacheDir()
+func InitCache() ([]string, error) {
+	gitignoresDir := GetCacheDir()
 
 	if !fileExists(gitignoresDir) {
 		fmt.Println("Getting gitignore files...")
@@ -23,13 +23,13 @@ func initCache() ([]string, error) {
 }
 
 func RemoveCacheDir() {
-	cacheDir := getCacheDir()
+	cacheDir := GetCacheDir()
 	fmt.Printf("Removing cache directory: %s...\n", cacheDir)
 	os.RemoveAll(cacheDir)
 	fmt.Println("Done")
 }
 
-func getCacheDir() string {
+func GetCacheDir() string {
 	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, ".github.gitignore")
 }

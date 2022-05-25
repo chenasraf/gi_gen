@@ -12,13 +12,21 @@ func autoDiscover(allFiles []string) ([]string, map[string]string) {
 	answer := askDiscovery()
 
 	if !answer {
-		return allFiles, getAllFiles(allFiles)
+		baseNames := []string{}
+		for _, fn := range allFiles {
+			basename := filepath.Base(fn)
+			langName := basename[:strings.Index(basename, ".")]
+			baseNames = append(baseNames, langName)
+		}
+		return baseNames, getAllFiles(allFiles)
 	}
 
 	list := discoverByExplicitProjectType()
+
 	if len(list) == 0 {
 		list = discoverByExistingPatterns(allFiles)
 	}
+
 	return maps.Keys(list), list
 }
 
@@ -130,7 +138,7 @@ func discoverByExplicitProjectType() map[string]string {
 
 	for _, key := range maps.Keys(discoveryMap) {
 		langName := discoveryMap[key]
-		ignoreFile := filepath.Join(getCacheDir(), langName+".gitignore")
+		ignoreFile := filepath.Join(GetCacheDir(), langName+".gitignore")
 		checkFile := filepath.Join(wd, key)
 
 		_, keyExists := results[langName]
