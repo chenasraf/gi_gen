@@ -41,8 +41,10 @@ func shorthand(msg string) string {
 
 func initFlags() {
 	appendUsage := "Append to .gitignore file if it already exists"
-	langsUsage := "List the languages you want to use as templates.\nTo add multiple templates, use commas as separators, e.g.: -languages Node,Python"
-	clearCacheUsage := "Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program. Exits after running, so other flags will be ignored."
+	langsUsage := "List the languages you want to use as templates.\n" +
+		"To add multiple templates, use commas as separators, e.g.: -languages Node,Python"
+	clearCacheUsage := "Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this " +
+		"program. Exits after running, so other flags will be ignored."
 	cleanOutputUsage := "Perform cleanup on the output .gitignore file, removing any unused patterns"
 	overwriteUsage := "Overwrite .gitignore file if it already exists"
 
@@ -75,7 +77,9 @@ func initHelpCommand() {
 		w := flag.CommandLine.Output()
 
 		fmt.Fprint(w, "Usage: gi_gen [options]\n\n")
-		fmt.Fprint(w, "This program generates .gitignore files for any project. You may clean unused\nlines from the generated file, and the program auto-discovers relevant\n.gitignore templates unless asked not to when the prompt appears.\n\n")
+		fmt.Fprint(w, "This program generates .gitignore files for any project. You may clean unused\n"+
+			"lines from the generated file, and the program auto-discovers relevant\n."+
+			"gitignore templates unless asked not to when the prompt appears.\n\n")
 		fmt.Fprint(w, "Run without arguments to use the normal functionality of gi_gen.\n\n")
 		fmt.Fprint(w, "Available flags:\n\n")
 		flag.PrintDefaults()
