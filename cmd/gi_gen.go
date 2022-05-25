@@ -36,7 +36,8 @@ var overwriteFile bool
 var appendFile bool
 
 func shorthand(msg string) string {
-	return msg + " (shorthand)"
+	return ""
+	// return msg + " (shorthand)"
 }
 
 func initFlags() {
