@@ -58,15 +58,16 @@ $ gi_gen
 
 You may pass additional flags to `gi_gen`. These are the currently available flags:
 
-| Usage                   | Description                                                                                                                                                      |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-languages` \| `-l`    | List the languages you want to use as templates.<br />To add multiple templates, use commas as separators, e.g.: `-languages Node,Python`                        |
-| `-clean-output` \| `-c` | Perform cleanup on the output .gitignore file, removing any unused patterns                                                                                      |
-| `-append` \| `-a`       | Append to .gitignore file if it already exists                                                                                                                   |
-| `-overwrite` \| `-w`    | Overwrite .gitignore file if it already exists                                                                                                                   |
-| `-detect-languages`     | Outputs the automatically-detected languages, separated by newlines, and exits. Useful for outside tools detection.                                              |
-| `-clear-cache`          | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
-| `-help` \| `-h`         | Display help message                                                                                                                                             |
+| Usage                    | Description                                                                                                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-languages` \| `-l`     | List the languages you want to use as templates.<br />To add multiple templates, use commas as separators, e.g.: `-languages Node,Python`                        |
+| `-auto-discover` \| `-d` | Use auto-discovery for project, detecting the project type and using the result as the pre-selected template list.                                               |
+| `-clean-output` \| `-c`  | Perform cleanup on the output .gitignore file, removing any unused patterns                                                                                      |
+| `-append` \| `-a`        | Append to .gitignore file if it already exists                                                                                                                   |
+| `-overwrite` \| `-w`     | Overwrite .gitignore file if it already exists                                                                                                                   |
+| `-detect-languages`      | Outputs the automatically-detected languages, separated by newlines, and exits. Useful for outside tools detection.                                              |
+| `-clear-cache`           | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
+| `-help` \| `-h`          | Display help message                                                                                                                                             |
 
 ## Contribute
 

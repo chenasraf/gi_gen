@@ -14,6 +14,8 @@ type GIGenOptions struct {
 	Languages         *[]string
 	CleanOutput       *bool
 	CleanOutputUsed   bool
+	AutoDiscover      *bool
+	AutoDiscoverUsed  bool
 	OverwriteFile     *bool
 	OverwriteFileUsed bool
 	AppendFile        *bool
@@ -100,7 +102,7 @@ func getProcessFiles(
 		}
 		fileNames, files = mappedFileNames, getAllFiles(mappedFileNames)
 	} else {
-		fileNames, files = readFromSelections(allFiles)
+		fileNames, files = readFromSelections(allFiles, opts)
 	}
 	return mappedFileNames, fileNames, files
 }

@@ -19,8 +19,13 @@ func AutoDiscover(allFiles []string) ([]string, map[string]string) {
 	return maps.Keys(list), list
 }
 
-func readFromSelections(allFiles []string) ([]string, map[string]string) {
-	answer := askDiscovery()
+func readFromSelections(allFiles []string, opts GIGenOptions) ([]string, map[string]string) {
+	var answer bool
+	if opts.AutoDiscoverUsed && *opts.AutoDiscover {
+		answer = *opts.AutoDiscover
+	} else {
+		answer = askDiscovery()
+	}
 
 	if !answer {
 		return readAllFiles(allFiles)

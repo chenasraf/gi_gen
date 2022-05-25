@@ -29,6 +29,8 @@ func RunMainCmd() {
 	flagLangs := getLangsFromArgs()
 	internal.GIGen(&internal.GIGenOptions{
 		Languages:         &flagLangs,
+		AutoDiscover:      &autoDiscover,
+		AutoDiscoverUsed:  isFlagPassed("auto-discover") || isFlagPassed("d"),
 		CleanOutput:       &cleanOutput,
 		CleanOutputUsed:   isFlagPassed("clean-output") || isFlagPassed("c"),
 		OverwriteFile:     &overwriteFile,
@@ -39,11 +41,12 @@ func RunMainCmd() {
 }
 
 var langsRaw string = ""
-var cleanCache bool = false
+var cleanCache bool
 var cleanOutput bool
 var overwriteFile bool
 var appendFile bool
 var detectLanguage bool
+var autoDiscover bool
 
 func shorthand(msg string) string {
 	return ""
@@ -53,6 +56,8 @@ func shorthand(msg string) string {
 func initFlags() {
 	langsUsage := "List the languages you want to use as templates.\n" +
 		"To add multiple templates, use commas as separators, e.g.: -languages Node,Python"
+	autoDiscoverUsage := "Use auto-discovery for project, detecting the project type and using the result as the pre-" +
+		"selected template list."
 	cleanOutputUsage := "Perform cleanup on the output .gitignore file, removing any unused patterns"
 	appendUsage := "Append to .gitignore file if it already exists"
 	overwriteUsage := "Overwrite .gitignore file if it already exists"
@@ -63,13 +68,21 @@ func initFlags() {
 
 	flag.Bool("help", false, "Display help message")
 	flag.BoolVar(&cleanCache, "clear-cache", false, clearCacheUsage)
+
+	flag.BoolVar(&autoDiscover, "d", false, shorthand(autoDiscoverUsage))
+	flag.BoolVar(&autoDiscover, "auto-discover", false, autoDiscoverUsage)
+
 	flag.BoolVar(&cleanOutput, "c", false, shorthand(cleanOutputUsage))
 	flag.BoolVar(&cleanOutput, "clean-output", false, cleanOutputUsage)
+
 	flag.BoolVar(&overwriteFile, "w", false, shorthand(overwriteUsage))
 	flag.BoolVar(&overwriteFile, "overwrite", false, overwriteUsage)
+
 	flag.BoolVar(&appendFile, "a", false, shorthand(appendUsage))
 	flag.BoolVar(&appendFile, "append", false, appendUsage)
+
 	flag.BoolVar(&detectLanguage, "detect-languages", false, detectLanguagesUsage)
+
 	flag.StringVar(&langsRaw, "l", langsRaw, shorthand(langsUsage))
 	flag.StringVar(&langsRaw, "languages", langsRaw, langsUsage)
 }
