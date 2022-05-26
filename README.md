@@ -26,6 +26,8 @@ easily.
 
 You may choose more than one template to generate.
 
+**Check out the [VS Code Extension](https://github.com/chenasraf/gi-gen-vscode-extension)!**
+
 ## Features
 
 GI Gen supports the following features:
