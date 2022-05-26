@@ -70,26 +70,26 @@ jobs:
 
       - name: Upload Release Asset (macOS ARM)
         # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
-        id: upload_release_asset_macos_x86
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gi_gen-darwin-10.16-arm64
-          asset_name: gi_gen-${{ github.event.ref }}-macos-intel
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset (macOS Intel)
-        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
         id: upload_release_asset_macos_arm
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/gi_gen-darwin-10.16-amd64
+          asset_path: ./dist/gi_gen-darwin-10.16-arm64
           asset_name: gi_gen-${{ github.event.ref }}-macos-arm
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (macOS Intel)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_macos_x86
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-darwin-10.16-amd64
+          asset_name: gi_gen-${{ github.event.ref }}-macos-intel
           asset_content_type: application/octet-stream
 
       #
