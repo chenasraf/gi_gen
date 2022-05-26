@@ -27,7 +27,7 @@ jobs:
           go_version: 1.18
           dest: dist
           prefix: gi_gen
-          targets: windows/386, linux/amd64, linux/arm64, darwin/arm64, darwin/amd64
+          targets: windows/386, linux/amd64, linux/arm64, linux/386, darwin/arm64, darwin/amd64
           v: true
           x: false
           race: false
@@ -108,16 +108,28 @@ jobs:
 
       #
 
-      - name: Upload Release Asset (Linux x86)
+      - name: Upload Release Asset (Linux 386)
         # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
-        id: upload_release_asset_linux_x86
+        id: upload_release_asset_linux_386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/gi_gen-linux-386
+          asset_name: gi_gen-${{ github.event.ref }}-linux-386
+          asset_content_type: application/octet-stream
+
+      - name: Upload Release Asset (Linux amd64)
+        # if: steps.update_tag.outputs.tagname && !contains(github.event.head_commit.message, '[skip publish]')
+        id: upload_release_asset_linux_amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./dist/gi_gen-linux-amd64
-          asset_name: gi_gen-${{ github.event.ref }}-linux-x86
+          asset_name: gi_gen-${{ github.event.ref }}-linux-amd64
           asset_content_type: application/octet-stream
 
       - name: Upload Release Asset (Linux ARM)
