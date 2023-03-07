@@ -1,5 +1,4 @@
 use std::{
-    fs,
     io::Error,
     path::{Path, PathBuf},
     process,
@@ -59,4 +58,15 @@ pub fn prepare_cache() -> Result<(), Error> {
     println!("Cache updated: {}", path.display());
 
     Ok(())
+}
+
+pub fn get_language_file(language: String) -> Result<String, Error> {
+    let cache_dir = get_cache_dir()?;
+    let language_file = cache_dir.join(format!("{}.gitignore", language));
+    let content = match std::fs::read_to_string(language_file) {
+        Ok(content) => content,
+        Err(_) => panic!("Could not read file"),
+    };
+
+    Ok(content)
 }

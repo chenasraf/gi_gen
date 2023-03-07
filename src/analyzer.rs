@@ -1,25 +1,25 @@
 use std::{collections::HashMap, fs, io::Error, path::PathBuf};
 
-pub fn get_language_candidates(path: PathBuf) -> Result<Vec<String>, Error> {
-    let files = fs::read_dir(path)?;
+pub fn get_language_candidates(path: &PathBuf) -> Result<Vec<String>, Error> {
     let mut result: Vec<String> = Vec::new();
     let patterns = get_glob_patterns();
 
-    for file in files {
-        let file = file?;
-        let file_name = match file.file_name().into_string() {
-            Ok(name) => name,
+    for (pattern, lang) in &patterns {
+        let files = fs::read_dir(&path)?;
+        let glob_pattern = match glob::Pattern::new(pattern) {
+            Ok(pattern) => pattern,
             Err(_) => Err(Error::new(
                 std::io::ErrorKind::Other,
-                "Could not convert file name to string",
+                "Could not create glob pattern",
             ))?,
         };
-        for (pattern, lang) in &patterns {
-            let glob_pattern = match glob::Pattern::new(pattern) {
-                Ok(pattern) => pattern,
+        for file in files {
+            let file = file?;
+            let file_name = match file.file_name().into_string() {
+                Ok(name) => name,
                 Err(_) => Err(Error::new(
                     std::io::ErrorKind::Other,
-                    "Could not create glob pattern",
+                    "Could not convert file name to string",
                 ))?,
             };
             if glob_pattern.matches(&file_name) {
