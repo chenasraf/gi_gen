@@ -60,13 +60,40 @@ pub fn prepare_cache() -> Result<(), Error> {
     Ok(())
 }
 
-pub fn get_language_file(language: String) -> Result<String, Error> {
+pub struct LanguageFile {
+    pub language: String,
+    pub content: String,
+    pub file_path: PathBuf,
+}
+
+pub fn get_language_file(language: String) -> Result<LanguageFile, Error> {
     let cache_dir = get_cache_dir()?;
-    let language_file = cache_dir.join(format!("{}.gitignore", language));
+    // TODO make this a case-insensitive file search
+    let language_file = &cache_dir.join(format!("{}.gitignore", language));
     let content = match std::fs::read_to_string(language_file) {
         Ok(content) => content,
         Err(_) => panic!("Could not read file"),
     };
 
-    Ok(content)
+    Ok(LanguageFile {
+        language,
+        content,
+        file_path: language_file.into(),
+    })
+}
+
+pub fn get_all_languages_contents(languages: Vec<String>) -> String {
+    let mut output = String::new();
+    for chosen in languages {
+        let language_file = match get_language_file(chosen.to_string()) {
+            Ok(info) => info,
+            Err(e) => panic!("Error: {}", e),
+        };
+        let content = language_file.content;
+        let sep = "#========================================================================\n";
+        output.push_str(format!("\n{sep}# {}\n{sep}\n", language_file.language).as_str());
+        output.push_str(&content);
+    }
+    output = format!("{}\n", output.trim_end());
+    output
 }

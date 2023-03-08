@@ -61,18 +61,18 @@ $ gi_gen
 
 You may pass additional flags to `gi_gen`. These are the currently available flags:
 
-| Usage                    | Description                                                                                                                                                      |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-languages` \| `-l`     | List the languages you want to use as templates.<br />To add multiple templates, use commas as separators, e.g.: `-languages Node,Python`                        |
-| `-auto-discover` \| `-d` | Use auto-discovery for project, detecting the project type and using the result as the pre-selected template list.                                               |
-| `-clean-output` \| `-c`  | Perform cleanup on the output .gitignore file, removing any unused patterns                                                                                      |
-| `-keep-output` \| `-k`   | Do not perform cleanup on the output .gitignore file, keep all the original contents                                                                             |
-| `-append` \| `-a`        | Append to .gitignore file if it already exists                                                                                                                   |
-| `-overwrite` \| `-w`     | Overwrite .gitignore file if it already exists                                                                                                                   |
-| `-detect-languages`      | Outputs the automatically-detected languages, separated by newlines, and exits. Useful for outside tools detection.                                              |
-| `-all-languages`         | Outputs all the available languages, separated by newlines, and exits. Useful for outside tools detection.                                                       |
-| `-clear-cache`           | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
-| `-help` \| `-h`          | Display help message                                                                                                                                             |
+| Usage                     | Description                                                                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--languages` \| `-l`     | List the languages you want to use as templates.<br />To add multiple templates, use commas as separators, e.g.: `-languages Node,Python`                        |
+| `--auto-discover` \| `-d` | Use auto-discovery for project, detecting the project type and using the result as the pre-selected template list.                                               |
+| `--clean-output` \| `-c`  | Perform cleanup on the output .gitignore file, removing any unused patterns                                                                                      |
+| `--keep-output` \| `-k`   | Do not perform cleanup on the output .gitignore file, keep all the original contents                                                                             |
+| `--append` \| `-a`        | Append to .gitignore file if it already exists                                                                                                                   |
+| `--overwrite` \| `-w`     | Overwrite .gitignore file if it already exists                                                                                                                   |
+| `--detect-languages`      | Outputs the automatically-detected languages, separated by newlines, and exits. Useful for outside tools detection.                                              |
+| `--all-languages`         | Outputs all the available languages, separated by newlines, and exits. Useful for outside tools detection.                                                       |
+| `--clear-cache`           | Clear the .gitignore cache directory, for troubleshooting or for removing trace files of this program.<br />Exits after running, so other flags will be ignored. |
+| `--help` \| `-h`          | Display help message                                                                                                                                             |
 
 ### Examples
 
@@ -85,28 +85,28 @@ You may pass additional flags to `gi_gen`. These are the currently available fla
 - Pre-select languages (skip prompt):
 
   ```shell
-  gi_gen -languages Node          # One language
-  gi_gen -languages Node,Python   # Multiple languages
+  gi_gen --languages Node          # One language
+  gi_gen --languages Node,Python   # Multiple languages
   ```
 
 - Perform clean up (skip prompt):
 
   ```shell
-  gi_gen -clean-output    # clean up
-  gi_gen -keep-output     # skip clean up
+  gi_gen --clean-output    # clean up
+  gi_gen --keep-output     # skip clean up
   ```
 
 - Use auto-discovery (skip prompt):
 
   ```shell
-  gi_gen -auto-discover
+  gi_gen --auto-discover
   ```
 
 - Existing file handlers (skip prompt):
 
   ```shell
-  gi_gen -append      # if file exists, add to end of it
-  gi_gen -overwrite   # if file exists, replace the existing content
+  gi_gen --append      # if file exists, add to end of it
+  gi_gen --overwrite   # if file exists, replace the existing content
   ```
 
 - Combined (skip all prompts):
@@ -119,13 +119,13 @@ You may pass additional flags to `gi_gen`. These are the currently available fla
 - Clean cache directory and exit:
 
   ```shell
-  gi_gen -clear-cache
+  gi_gen --clear-cache
   ```
 
 - Detect languages and output the results, then exit:
 
   ```shell
-  gi_gen -detect-languages
+  gi_gen --detect-languages
   ```
 
 ## Contribute
@@ -134,7 +134,7 @@ Credits to [open-source-ideas][osi] for the idea for the tool.
 
 Please feel free to open PRs or issues with bug fixes/reports, or feature requests.
 
-This project was built using Go, and should run easily with the normal Go tools with no further
+This project was built using Rust, and should run easily with the normal Rust tools with no further
 configuration.
 
 Tested on all major platforms, but feel free to report any issues on your platform if you have any,

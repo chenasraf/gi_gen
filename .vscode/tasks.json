@@ -10,6 +10,18 @@
       "problemMatcher": []
     },
     {
+      "label": "run program (-languages)",
+      "type": "shell",
+      "args": [
+        "run",
+        "--",
+        "--languages",
+        "Node,Rust"
+      ],
+      "command": "cargo",
+      "problemMatcher": []
+    },
+    {
       "label": "run tests",
       "type": "shell",
       "command": "cargo test",
