@@ -5,14 +5,12 @@ pub fn get_language_candidates(path: &PathBuf) -> Result<Vec<String>, Error> {
     let patterns = get_glob_patterns();
 
     for (pattern, lang) in &patterns {
-        let files = fs::read_dir(&path)?;
-        let glob_pattern = match glob::Pattern::new(pattern) {
-            Ok(pattern) => pattern,
-            Err(_) => Err(Error::new(
-                std::io::ErrorKind::Other,
-                "Could not create glob pattern",
-            ))?,
+        let files: Vec<Result<fs::DirEntry, Error>> = path.read_dir()?.collect();
+        let glob_compiler = match globset::Glob::new(pattern) {
+            Ok(it) => it,
+            Err(err) => return Err(Error::new(std::io::ErrorKind::Other, err)),
         };
+        let glob_pattern = glob_compiler.compile_matcher();
         for file in files {
             let file = file?;
             let file_name = match file.file_name().into_string() {
@@ -22,11 +20,12 @@ pub fn get_language_candidates(path: &PathBuf) -> Result<Vec<String>, Error> {
                     "Could not convert file name to string",
                 ))?,
             };
-            if glob_pattern.matches(&file_name) {
+            if glob_pattern.is_match(&file_name) {
                 result.push(lang.to_string());
             }
         }
     }
+    result.sort();
 
     Ok(result)
 }
@@ -39,9 +38,9 @@ fn get_glob_patterns() -> HashMap<String, String> {
         String::from("Android"),
     );
     result.insert(String::from("composer.json"), String::from("Composer"));
-    result.insert(String::from("pubspec.ya?ml"), String::from("Dart"));
+    result.insert(String::from("pubspec.{yml,yaml}"), String::from("Dart"));
     result.insert(String::from("go.{mod,sum}"), String::from("Go"));
-    result.insert(String::from("_config.ya?ml"), String::from("Jekyll"));
+    result.insert(String::from("_config.{yml,yaml}"), String::from("Jekyll"));
     result.insert(String::from("Jenkinsfile"), String::from("JENKINS_HOME"));
     result.insert(String::from("jobs"), String::from("JENKINS_HOME"));
     result.insert(String::from("package.json"), String::from("Node"));
@@ -143,4 +142,41 @@ fn get_glob_patterns() -> HashMap<String, String> {
     );
     result.insert(String::from("*.zep"), String::from("Zephir"));
     result
+}
+
+#[cfg(test)]
+mod tests {
+    use std::io::Error;
+
+    #[test]
+    fn finds_single_candidate() -> Result<(), Error> {
+        let dir = tempfile::tempdir()?;
+        let dir_path = dir.into_path();
+        let file_path = dir_path.join("Cargo.toml");
+        std::fs::write(&file_path, "")?;
+        let result = super::get_language_candidates(&dir_path)?;
+        let expected: Vec<String> = vec![String::from("Rust")];
+        assert_eq!(result, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn finds_multiple_candidates() -> Result<(), Error> {
+        let dir = tempfile::tempdir()?;
+        let dir_path = dir.into_path();
+        let file1_path = dir_path.join("package.json");
+        let file2_path = dir_path.join("pubspec.yaml");
+        let file3_path = dir_path.join("go.sum");
+        std::fs::write(&file1_path, "")?;
+        std::fs::write(&file2_path, "")?;
+        std::fs::write(&file3_path, "")?;
+        let result = super::get_language_candidates(&dir_path)?;
+        let expected: Vec<String> = vec![
+            String::from("Dart"),
+            String::from("Go"),
+            String::from("Node"),
+        ];
+        assert_eq!(result, expected);
+        Ok(())
+    }
 }

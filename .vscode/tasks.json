@@ -8,6 +8,12 @@
       "type": "shell",
       "command": "cargo run",
       "problemMatcher": []
-    }
+    },
+    {
+      "label": "run tests",
+      "type": "shell",
+      "command": "cargo test",
+      "problemMatcher": []
+    },
   ]
 }
