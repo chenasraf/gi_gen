@@ -164,6 +164,6 @@ func initHelpCommand() {
 		fmt.Fprint(w, "Run without arguments to use the normal functionality of gi_gen.\n\n")
 		fmt.Fprint(w, "Available flags:\n\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(w, "\nCopyright © 2022 - Chen Asraf\nhttps://casraf.blog\nhttps://github.com/chenasraf/gi_gen\n")
+		fmt.Fprintf(w, "\nCopyright © 2024 - Chen Asraf\nhttps://casraf.dev\nhttps://github.com/chenasraf/gi_gen\n")
 	}
 }

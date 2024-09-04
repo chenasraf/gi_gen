@@ -3,26 +3,12 @@ package internal
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/chenasraf/gi_gen/internal/utils"
 	"golang.org/x/exp/maps"
 )
-
-func getGitignoreFiles(sourceDir string) ([]string, error) {
-	return filepath.Glob(filepath.Join(sourceDir, "*.gitignore"))
-}
-
-func isCacheNeedsUpdate() bool {
-	gitignoresDir := GetCacheDir()
-	localBytes, localErr := exec.Command("git", "-C", gitignoresDir, "rev-list", "--count", "HEAD..@{u}").Output()
-	utils.HandleErr(localErr)
-	localStr := strings.TrimSpace(string(localBytes))
-
-	return localStr != "0"
-}
 
 var ignoreLines = []string{
 	"/*",
@@ -168,7 +154,13 @@ func cleanupMultipleFiles(files []string, langKeys []string) string {
 		header := utils.Ternary(len(files) > 1, langHeader(langKeys[i]), "")
 		prefixNewline := utils.Ternary(i > 0, "\n", "")
 		contents := prefixNewline + header + cleanSelection
-		out = append(out, contents)
+		// exclude dupes
+		fmt.Println("cleanSelection: " + cleanSelection)
+		if !utils.Contains(out, cleanSelection) {
+			out = append(out, contents)
+		} else {
+			fmt.Println("Skipped duplicate: " + cleanSelection)
+		}
 	}
 	return strings.Join(out, "\n")
 }
