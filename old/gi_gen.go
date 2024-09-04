@@ -1,13 +1,9 @@
-package cmd
+package main
 
 import (
-	"flag"
 	"fmt"
 	"path/filepath"
 	"strings"
-
-	"github.com/chenasraf/gi_gen/internal"
-	"github.com/chenasraf/gi_gen/internal/utils"
 )
 
 func RunMainCmd() {
@@ -15,7 +11,7 @@ func RunMainCmd() {
 	initHelpCommand()
 	shouldReturn := false
 
-	flag.Parse()
+	opts := parseArgs()
 
 	shouldReturn = allLanguageCommand()
 	if shouldReturn {
@@ -33,19 +29,18 @@ func RunMainCmd() {
 	}
 
 	flagLangs := getLangsFromArgs()
-	internal.GIGen(&internal.GIGenOptions{
-		Languages:         &flagLangs,
-		AutoDiscover:      autoDiscover,
-		AutoDiscoverUsed:  isFlagPassed("auto-discover") || isFlagPassed("d"),
-		CleanOutput:       cleanOutput,
-		CleanOutputUsed:   isFlagPassed("clean-output") || isFlagPassed("c"),
-		KeepOutput:        keepOutput,
-		KeepOutputUsed:    isFlagPassed("keep-output") || isFlagPassed("k"),
-		OverwriteFile:     overwriteFile,
-		OverwriteFileUsed: isFlagPassed("overwrite") || isFlagPassed("w"),
-		AppendFile:        appendFile,
-		AppendFileUsed:    isFlagPassed("append") || isFlagPassed("a"),
-	})
+	GIGen(opts)
+}
+
+func parseArgs() *GIGenOptions {
+	opts := &GIGenOptions{
+		Languages:    &[]string{},
+		CleanOutput:  NewNullable[bool](false, false),
+		KeepOutput:   NewNullable[bool](false, false),
+		AutoDiscover: NewNullable[bool](false, false),
+		Behavior:     NewNullable[Behavior](false, BehaviorSkip),
+	}
+	return opts
 }
 
 var langsRaw string = ""
@@ -120,7 +115,7 @@ func getLangsFromArgs() []string {
 
 func cleanCommand() bool {
 	if cleanCache {
-		internal.RemoveCacheDir()
+		RemoveCacheDir()
 		return true
 	}
 	return false
@@ -128,9 +123,9 @@ func cleanCommand() bool {
 
 func detectLanguageCommand() bool {
 	if detectLanguages {
-		allFiles, err := internal.InitCache()
-		discovery, _ := internal.AutoDiscover(allFiles)
-		utils.HandleErr(err)
+		allFiles, err := InitCache()
+		discovery, _ := AutoDiscover(allFiles)
+		HandleErr(err)
 		fmt.Println(strings.Join(discovery, "\n"))
 		return true
 	}
@@ -139,8 +134,8 @@ func detectLanguageCommand() bool {
 
 func allLanguageCommand() bool {
 	if allLanguages {
-		allFiles, err := internal.InitCache()
-		utils.HandleErr(err)
+		allFiles, err := InitCache()
+		HandleErr(err)
 		out := []string{}
 		for _, fn := range allFiles {
 			basename := filepath.Base(fn)

@@ -1,4 +1,4 @@
-package internal
+package main
 
 import (
 	"fmt"
@@ -6,8 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chenasraf/gi_gen/internal/utils"
-	"golang.org/x/exp/maps"
+	"github.com/chenasraf/utils"
 )
 
 var ignoreLines = []string{
@@ -19,7 +18,7 @@ var ignoreLines = []string{
 	".idea/*",
 }
 
-func findPatternFileMatches(patterns string) bool {
+func findPatternFileMatches(patterns string) (bool, string) {
 	lines := strings.Split(patterns, "\n")
 	wd, _ := os.Getwd()
 
@@ -37,15 +36,15 @@ func findPatternFileMatches(patterns string) bool {
 			line = strings.TrimSpace(line[0:idx])
 		}
 
-		if len(line) == 0 || utils.Contains(ignoreLines, line) {
+		if len(line) == 0 || utils.SliceContains(ignoreLines, line) {
 			continue
 		}
 		if utils.GlobExists(filepath.Join(wd, line)) {
-			return true
+			return true, line
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 var patternCache []string = []string{}
@@ -64,7 +63,7 @@ func removeUnusedPatterns(contents string) string {
 		}
 
 		if utils.GlobExists(filepath.Join(wd, trimmed)) {
-			if utils.Contains(patternCache, trimmed) {
+			if utils.SliceContains(patternCache, trimmed) {
 				continue
 			}
 
@@ -110,26 +109,6 @@ func gatherPreviousCommentGroup(i int, lastTakenIdx int, lines []string, keep []
 	return keep
 }
 
-func getLanguages(files map[string]string, fileNames []string) ([]string, []string) {
-	selectedContents := []string{}
-	allKeys := maps.Keys(files)
-	selectedKeys := maps.Keys(files)
-	fmt.Println()
-	if len(allKeys) == 0 {
-		fmt.Println("Found no templates. Quitting.")
-		os.Exit(1)
-	} else if len(allKeys) > 1 {
-		fmt.Println("Found " + fmt.Sprint(len(fileNames)) +
-			" possible matches in your project for gitignore files.")
-		selectedContents, selectedKeys = askLanguage(fileNames, selectedContents, files)
-	} else {
-		fmt.Printf("Found one match for your project: %s. Proceeding...\n", allKeys[0])
-		selectedContents = []string{files[allKeys[0]]}
-	}
-
-	return selectedContents, selectedKeys
-}
-
 func langHeader(langName string) string {
 	sep := "#========================================================================\n"
 	header := fmt.Sprintf(sep+"# %s\n"+sep+"\n", langName)
@@ -156,7 +135,7 @@ func cleanupMultipleFiles(files []string, langKeys []string) string {
 		contents := prefixNewline + header + cleanSelection
 		// exclude dupes
 		fmt.Println("cleanSelection: " + cleanSelection)
-		if !utils.Contains(out, cleanSelection) {
+		if !utils.SliceContains(out, cleanSelection) {
 			out = append(out, contents)
 		} else {
 			fmt.Println("Skipped duplicate: " + cleanSelection)

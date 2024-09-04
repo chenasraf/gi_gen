@@ -1,10 +1,9 @@
-package internal
+package main
 
 import (
 	"fmt"
 
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/chenasraf/gi_gen/internal/utils"
+	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/exp/maps"
 )
 
@@ -42,7 +41,7 @@ func askCleanup() bool {
 }
 
 func askYesNo(message string, defaultValue bool) bool {
-	return askSelection(message, []string{"Yes", "No"}, utils.Ternary(defaultValue, "Yes", "No")) == "Yes"
+	return askSelection(message, []string{"Yes", "No"}, Ternary(defaultValue, "Yes", "No")) == "Yes"
 }
 
 func askMulti(message string, options []string) []string {
@@ -55,7 +54,7 @@ func askMulti(message string, options []string) []string {
 	survey.AskOne(langPrompt, &selections)
 
 	if selections == nil {
-		utils.KeyInterrupt()
+		KeyInterrupt()
 	}
 
 	return selections
@@ -72,7 +71,7 @@ func askSelection(message string, options []string, defaultValue string) string 
 	survey.AskOne(langPrompt, &selection)
 
 	if selection == "" {
-		utils.KeyInterrupt()
+		KeyInterrupt()
 	}
 
 	return selection

@@ -1,4 +1,4 @@
-package internal
+package main
 
 import (
 	"fmt"
@@ -6,33 +6,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chenasraf/gi_gen/internal/utils"
 	"golang.org/x/exp/maps"
 )
 
-type GIGenOptions struct {
-	Languages         *[]string
-	CleanOutput       bool
-	CleanOutputUsed   bool
-	KeepOutput        bool
-	KeepOutputUsed    bool
-	AutoDiscover      bool
-	AutoDiscoverUsed  bool
-	OverwriteFile     bool
-	OverwriteFileUsed bool
-	AppendFile        bool
-	AppendFileUsed    bool
-}
-
 func GIGen(options *GIGenOptions) {
 	wd, err := os.Getwd()
-	utils.HandleErr(err)
-	opts := utils.Ternary(options != nil, *options, GIGenOptions{})
+	HandleErr(err)
+	opts := Ternary(options != nil, *options, GIGenOptions{})
 
 	outFile := filepath.Join(wd, ".gitignore")
 	allFiles, err := InitCache()
 	cacheDir := GetCacheDir()
-	utils.HandleErr(err)
+	HandleErr(err)
 	var fileNames []string
 	var files map[string]string
 
@@ -47,13 +32,13 @@ func GIGen(options *GIGenOptions) {
 	cleanupSelection := getCleanupSelection(opts)
 	outContents := processFileOutput(cleanupSelection, selectedContents, selectedKeys)
 
-	if utils.FileExists(outFile) {
+	if FileExists(outFile) {
 		overwriteSelection := getOverwriteSelection(opts)
-		utils.HandleFileOverwrite(outFile, outContents, overwriteSelection)
+		HandleFileOverwrite(outFile, outContents, overwriteSelection)
 	} else {
 		fmt.Println()
 		fmt.Printf("Writing to %s\n", outFile)
-		utils.WriteFile(outFile, outContents, true)
+		WriteFile(outFile, outContents, true)
 	}
 
 	fmt.Println()
@@ -62,8 +47,8 @@ func GIGen(options *GIGenOptions) {
 
 func getOverwriteSelection(opts GIGenOptions) string {
 	var overwriteSelection string
-	if opts.OverwriteFileUsed || opts.AppendFileUsed {
-		overwriteSelection = utils.Ternary(opts.OverwriteFileUsed, "Overwrite", "Append")
+	if opts.Behavior.HasValue {
+		overwriteSelection = Ternary(opts.Behavior.Value == BehaviorOverwrite, "Overwrite", "Append")
 	} else {
 		return askOverwrite()
 	}
@@ -82,8 +67,8 @@ func processFileOutput(cleanupSelection bool, selectedContents []string, selecte
 
 func getCleanupSelection(opts GIGenOptions) bool {
 	var cleanupSelection bool
-	if opts.CleanOutputUsed || opts.KeepOutput {
-		cleanupSelection = opts.CleanOutput && !opts.KeepOutput
+	if opts.CleanOutput.HasValue {
+		cleanupSelection = opts.CleanOutput.Value
 	} else {
 		cleanupSelection = askCleanup()
 	}
@@ -98,7 +83,7 @@ func getProcessFiles(
 	if len(*opts.Languages) > 0 && (*opts.Languages)[0] != "" {
 		for _, lng := range *opts.Languages {
 			filePath := filepath.Join(cacheDir, lng+".gitignore")
-			if utils.FileExists(filePath) {
+			if FileExists(filePath) {
 				mappedFileNames = append(mappedFileNames, filePath)
 			}
 		}

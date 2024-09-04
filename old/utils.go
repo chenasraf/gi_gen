@@ -1,4 +1,4 @@
-package utils
+package main
 
 import (
 	"fmt"
@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"path/filepath"
 )
-
-var RepoUrl = "https://github.com/github/gitignore"
 
 func FileExists(path string) bool {
 	_, err := os.Stat(path)

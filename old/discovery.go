@@ -1,11 +1,10 @@
-package internal
+package main
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/chenasraf/gi_gen/internal/utils"
 	"golang.org/x/exp/maps"
 )
 
@@ -21,8 +20,8 @@ func AutoDiscover(allFiles []string) ([]string, map[string]string) {
 
 func readFromSelections(allFiles []string, opts GIGenOptions) ([]string, map[string]string) {
 	var answer bool
-	if opts.AutoDiscoverUsed && opts.AutoDiscover {
-		answer = opts.AutoDiscover
+	if opts.AutoDiscover.HasValue {
+		answer = opts.AutoDiscover.Value
 	} else {
 		answer = askDiscovery()
 	}
@@ -48,7 +47,7 @@ func getAllFiles(allFiles []string) map[string]string {
 	files := make(map[string]string)
 
 	for _, filename := range allFiles {
-		contents := utils.ReadFile(filename)
+		contents := ReadFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
@@ -62,7 +61,7 @@ func discoverByExistingPatterns(allFiles []string) map[string]string {
 	files := make(map[string]string)
 
 	for _, filename := range allFiles {
-		contents := utils.ReadFile(filename)
+		contents := ReadFile(filename)
 		basename := filepath.Base(filename)
 		langName := basename[:strings.Index(basename, ".")]
 
@@ -75,7 +74,7 @@ func discoverByExistingPatterns(allFiles []string) map[string]string {
 
 func discoverByExplicitProjectType() map[string]string {
 	wd, err := os.Getwd()
-	utils.HandleErr(err)
+	HandleErr(err)
 
 	discoveryMap := make(map[string]string)
 
@@ -225,8 +224,8 @@ func discoverByExplicitProjectType() map[string]string {
 		checkFile := filepath.Join(wd, key)
 
 		_, keyExists := results[langName]
-		if !keyExists && utils.GlobExists(checkFile) {
-			results[langName] = utils.ReadFile(ignoreFile)
+		if !keyExists && GlobExists(checkFile) {
+			results[langName] = ReadFile(ignoreFile)
 		}
 	}
 

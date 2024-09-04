@@ -1,4 +1,4 @@
-package internal
+package main
 
 import (
 	"fmt"
@@ -7,15 +7,17 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chenasraf/gi_gen/internal/utils"
+	"github.com/chenasraf/utils"
 )
+
+var RepoUrl = "https://github.com/github/gitignore"
 
 func InitCache() ([]string, error) {
 	gitignoresDir := GetCacheDir()
 
 	if !utils.FileExists(gitignoresDir) {
 		fmt.Println("Getting gitignore files...")
-		utils.RunCmd("git", "clone", "--depth=2", utils.RepoUrl, gitignoresDir)
+		utils.RunCmd("git", "clone", "--depth=2", RepoUrl, gitignoresDir)
 		fmt.Println()
 	} else if isCacheNeedsUpdate() {
 		fmt.Println("Updating gitignore files...")
