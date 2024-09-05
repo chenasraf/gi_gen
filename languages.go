@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/chenasraf/gi_gen/ui"
 	"github.com/chenasraf/utils"
 )
 
@@ -247,4 +248,35 @@ func getLanguagePatterns() map[string]string {
 	discoveryMap["**/*.{yaml,yml}"] = "AppEngine"
 
 	return discoveryMap
+}
+
+func getLanguageSelections(opts *Options) ([]string, bool) {
+	if opts.autoSelect {
+		// TODO extract to languages.go
+		languages, _ := getAutoSelectCandidates()
+		if len(languages) == 1 {
+			// Single candidate, auto-select
+			return languages, true
+		} else {
+			question := ""
+			var choices []string
+
+			if len(languages) > 1 {
+				// Multiple candidates, ui for selection
+				question = "Found more than one candidate!\nPlease select which to use"
+				choices = languages
+			} else {
+				// No candidates, ui for selection
+				question = "Couldn't auto-detect project type.\nPlease select gitignore templates"
+				allTemplates := getAllIgnoreTemplates()
+				choices = utils.MapKeys(allTemplates)
+			}
+
+			return ui.AskLanguages(question, utils.SortAlphanumeric(choices)), false
+		}
+	}
+	// TODO extract to languages.go
+	question := "Please select gitignore templates"
+	choices := utils.MapKeys(getAllIgnoreTemplates())
+	return ui.AskLanguages(question, utils.SortAlphanumeric(choices)), false
 }
