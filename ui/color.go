@@ -1,94 +1,61 @@
 package ui
 
-import "fmt"
+import (
+	"fmt"
 
-func Color(color int) (string, int) {
-	c := fmt.Sprintf("\x1B[%dm", color)
-	return c, 0 // len(c)
+	"github.com/rivo/uniseg"
+)
+
+type Colored struct {
+	text  string
+	color int
 }
 
-func ColorText(color int, text string) (string, int) {
-	colored, colorCount := Color(color)
-	reset, resetCount := Reset()
+func NewColored(color int, text string) Colored {
+	return Colored{color: color, text: text}
+}
+
+func (c Colored) TextLength() int {
+	return uniseg.GraphemeClusterCount(c.text)
+}
+
+func (c Colored) TokenLength() int {
+	if c.color == ColorReset {
+		return 0
+	}
+	return len(ColorToken(c.color) + ColorToken(ColorReset))
+}
+
+func (c Colored) String() string {
+	return ColorText(c.color, c.text)
+}
+
+func ColorToken(color int) string {
+	c := fmt.Sprintf("\x1B[%dm", color)
+	return c
+}
+
+func ColorText(color int, text string) string {
+	if color == ColorReset {
+		return text
+	}
+	colored := ColorToken(color)
+	reset := ColorToken(ColorReset)
 
 	out := fmt.Sprintf("%s%s%s", colored, text, reset)
-	count := (colorCount + resetCount + len(text))
 
-	return out, count
+	return out
 }
 
-func Red() (string, int) {
-	return Color(31)
-}
-
-func RedText(text string) (string, int) {
-	return ColorText(31, text)
-}
-
-func Green() (string, int) {
-	return Color(32)
-}
-
-func GreenText(text string) (string, int) {
-	return ColorText(32, text)
-}
-
-func Yellow() (string, int) {
-	return Color(33)
-}
-
-func YellowText(text string) (string, int) {
-	return ColorText(33, text)
-}
-
-func Blue() (string, int) {
-	return Color(34)
-}
-
-func BlueText(text string) (string, int) {
-	return ColorText(34, text)
-}
-
-func Magenta() (string, int) {
-	return Color(35)
-}
-
-func MagentaText(text string) (string, int) {
-	return ColorText(35, text)
-}
-
-func Cyan() (string, int) {
-	return Color(36)
-}
-
-func CyanText(text string) (string, int) {
-	return ColorText(36, text)
-}
-
-func White() (string, int) {
-	return Color(37)
-}
-
-func WhiteText(text string) (string, int) {
-	return ColorText(37, text)
-}
-
-func Black() (string, int) {
-	return Color(30)
-}
-
-func BlackText(text string) (string, int) {
-	return ColorText(30, text)
-}
-
-func Dim() (string, int) {
-	return Color(2)
-}
-
-func DimText(text string) (string, int) {
-	return ColorText(2, text)
-}
-
-func Reset() (string, int) {
-	return Color(0)
-}
+const (
+	ColorRed     = 31
+	ColorGreen   = 32
+	ColorYellow  = 33
+	ColorBlue    = 34
+	ColorMagenta = 35
+	ColorCyan    = 36
+	ColorWhite   = 37
+	ColorBlack   = 30
+	ColorDim     = 2
+	ColorReset   = 0
+)

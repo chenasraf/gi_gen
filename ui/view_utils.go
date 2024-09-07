@@ -1,56 +1,59 @@
 package ui
 
 import (
-	"fmt"
-	"math"
-	"strconv"
 	"strings"
 
-	// "unicode/utf8"
-
-	"github.com/chenasraf/utils"
 	"github.com/rivo/uniseg"
 )
 
+const (
+	CHECKMARK = "✔"
+	CURSOR    = "▶"
+)
+
 func viewRow[T any](active bool, selected bool, checkbox bool, i int, choice *Choice[T]) (string, int) {
-	cursor_ := " "
+	var (
+		s       strings.Builder
+		tok     Colored
+		c       int
+		cursor  = " "
+		checked = " "
+	)
+
 	if active {
-		cursor_ = "▶︎"
+		cursor = CURSOR
 		// cursor_ = ">"
 	}
-	checked := " "
 	if selected {
-		checked = "x"
+		// checked = "x"
+		// v
+		checked = CHECKMARK
 	}
 
-	var s strings.Builder
-	txt, c, cc := "", 0, 0
-
-	s.WriteString(cursor_)
-	c += uniseg.GraphemeClusterCount(cursor_)
+	s.WriteString(cursor)
+	c += uniseg.GraphemeClusterCount(cursor)
 
 	if checkbox {
-		txt, cc = BlueText("[")
-		s.WriteString(txt)
-		c += cc
+		tok = NewColored(ColorBlue, "[")
+		s.WriteString(tok.String())
+		c += tok.TextLength()
 
-		s.WriteString(checked)
-		c += uniseg.GraphemeClusterCount(checked)
+		tok = NewColored(ColorReset, checked)
+		s.WriteString(tok.String())
+		c += tok.TextLength()
 
-		txt, cc = BlueText("] ")
-		s.WriteString(txt)
-		c += cc
+		tok = NewColored(ColorBlue, "] ")
+		s.WriteString(tok.String())
+		c += tok.TextLength()
 	}
 
 	if selected {
-		txt, cc = choice.Label, uniseg.GraphemeClusterCount(choice.Label)
+		tok = NewColored(ColorReset, choice.Label)
 	} else {
-		txt, cc = DimText(choice.Label)
+		tok = NewColored(ColorDim, choice.Label)
 	}
-	s.WriteString(txt)
-	c += cc
-	// _ = cc
-	// c -= 7
+	s.WriteString(tok.String())
+	c += tok.TextLength()
 
 	return s.String(), c
 }
@@ -65,87 +68,4 @@ type ViewWindow[T any] struct {
 	choices      []*Choice[T]
 	checkbox     bool
 	border       bool
-}
-
-var termWidth int
-
-func setTermWidth() {
-	if termWidth > 0 {
-		return
-	}
-	res, err := utils.RunCmd("tput", "cols")
-	if err == nil {
-		w, err := strconv.Atoi(strings.TrimSpace(res))
-		if err == nil {
-			termWidth = w
-		} else {
-			termWidth = 80
-		}
-	} else {
-		termWidth = 80
-	}
-}
-
-func viewRowsWindow[T any](w ViewWindow[T]) string {
-	setTermWidth()
-	var s strings.Builder
-	isCursorAtStartEdge := w.cursor < w.offset
-	isCursorAtEndEdge := w.cursor > len(w.choices)-w.height+w.offset
-	startOffset := 0
-	maxWidth := w.maxWidth
-	if maxWidth == 0 {
-		maxWidth = 80
-	}
-	width := int(math.Min(float64(termWidth), float64(w.maxWidth)))
-	border := w.border
-	if isCursorAtEndEdge {
-		startOffset = len(w.choices) - w.cursor - w.height + w.offset
-	}
-	if isCursorAtStartEdge {
-		startOffset = int(math.Abs(float64(w.cursor - w.offset)))
-	}
-	// s.WriteString(
-	// 	fmt.Sprintf("lastMove: %d, offset: %d, startOffset: %d, cur: %d, len: %d, atEnd: %v\n", w.lastMovement, w.offset, startOffset, w.pos, len(w.choices), isCursorAtEndEdge),
-	// )
-	if border {
-		s.WriteString("┌")
-		s.WriteString(strings.Repeat("─", width-2))
-		s.WriteString("┐\n")
-	}
-	for row := range w.height {
-		i := w.cursor - w.offset + startOffset + row
-		selected := w.isSelected(i)
-		active := w.cursor == i
-		choice := w.choices[i]
-		rowTxt, contentLen := viewRow(active, selected, w.checkbox, i, choice)
-		rowLen := contentLen
-		if border {
-			s.WriteString("│")
-			// border + right padding
-			rowLen += 3
-		}
-		s.WriteString(rowTxt)
-
-		// dbg := fmt.Sprintf("w: %d, rl: %d, cl: %d", width, rowLen, contentLen)
-		dbg := fmt.Sprintf("w: %d, rl: %d", width, rowLen)
-		// dbg := fmt.Sprintf("")
-		rowLen += uniseg.GraphemeClusterCount(dbg)
-
-		if border {
-			s.WriteString(strings.Repeat(" ", width-rowLen))
-			s.WriteString(dbg)
-			s.WriteString(" │")
-		} else if len(dbg) > 0 {
-			s.WriteString(strings.Repeat(" ", width-rowLen))
-			s.WriteString(dbg)
-		}
-
-		s.WriteString("\n")
-	}
-	if border {
-		s.WriteString("└")
-		s.WriteString(strings.Repeat("─", width-2))
-		s.WriteString("┘\n")
-	}
-	return s.String()
 }
