@@ -7,20 +7,20 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type MultiSelectModel[T any] struct {
+type MultiSelectModel[T comparable] struct {
 	items    []*Choice[T]
-	selected map[int]struct{}
+	selected map[T]struct{}
 }
 
 func (m *MultiSelectModel[T]) Items() []*Choice[T] {
 	return m.items
 }
 
-func (m *MultiSelectModel[T]) Select(i int) {
-	if _, exists := m.selected[i]; exists {
-		delete(m.selected, i)
+func (m *MultiSelectModel[T]) Select(choice *Choice[T]) {
+	if _, exists := m.selected[choice.Value]; exists {
+		delete(m.selected, choice.Value)
 	} else {
-		m.selected[i] = struct{}{}
+		m.selected[choice.Value] = struct{}{}
 	}
 }
 
@@ -28,8 +28,8 @@ func (m *MultiSelectModel[T]) GetSelectedCount() int {
 	return len(m.selected)
 }
 
-func (m *MultiSelectModel[T]) IsSelected(i int) bool {
-	_, exists := m.selected[i]
+func (m *MultiSelectModel[T]) IsSelected(choice *Choice[T]) bool {
+	_, exists := m.selected[choice.Value]
 	return exists
 }
 
@@ -44,22 +44,13 @@ func (m *MultiSelectModel[T]) Update(msg tea.Msg) (ListModel[T], tea.Cmd) {
 	return m, nil
 }
 
-func AskMulti[T any](question string, choices []*Choice[T]) []*Choice[T] {
-	var dump *os.File
-	if _, ok := os.LookupEnv("DEBUG"); ok {
-		var err error
-		dump, err = os.OpenFile("messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
-		if err != nil {
-			os.Exit(1)
-		}
-	}
+func AskMulti[T comparable](question string, choices []*Choice[T]) []*Choice[T] {
 	list := MultiSelectModel[T]{
 		items:    choices,
-		selected: make(map[int]struct{}),
+		selected: make(map[T]struct{}),
 	}
 	cursor := NewListCtrl[*MultiSelectModel[T]](&list)
 	cursor.question = question
-	cursor.debug = dump
 
 	p := tea.NewProgram(cursor, tea.WithAltScreen())
 
@@ -69,8 +60,12 @@ func AskMulti[T any](question string, choices []*Choice[T]) []*Choice[T] {
 	}
 
 	selections := make([]*Choice[T], 0, cursor.list.GetSelectedCount())
-	for id, _ := range list.selected {
-		selections = append(selections, choices[id])
+	choiceMap := make(map[T]*Choice[T])
+	for _, choice := range list.Items() {
+		choiceMap[choice.Value] = choice
+	}
+	for value, _ := range list.selected {
+		selections = append(selections, choiceMap[value])
 	}
 
 	return selections

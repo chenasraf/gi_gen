@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 
-	"github.com/rivo/uniseg"
+	"github.com/chenasraf/utils"
 )
 
 type Colored struct {
@@ -16,7 +16,7 @@ func NewColored(color int, text string) Colored {
 }
 
 func (c Colored) TextLength() int {
-	return uniseg.GraphemeClusterCount(c.text)
+	return utils.StrLen(c.text)
 }
 
 func (c Colored) TokenLength() int {

@@ -1,20 +1,23 @@
 package ui
 
 import (
+	"fmt"
 	"io"
 	"math"
+	"os"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/chenasraf/utils"
 	"github.com/davecgh/go-spew/spew"
 )
 
 type ListModel[T any] interface {
 	// TODO maybe return tea.Cmd in these so more behavior can be added
 	Items() []*Choice[T]
-	Select(i int)
+	Select(choice *Choice[T])
 	GetSelectedCount() int
-	IsSelected(i int) bool
+	IsSelected(choice *Choice[T]) bool
 	Style() ListStyle
 	Update(msg tea.Msg) (ListModel[T], tea.Cmd)
 }
@@ -38,6 +41,8 @@ const (
 	ExitQuit
 )
 
+var debug io.Writer
+
 type ListCtrl[T ListModel[C], C any] struct {
 	question      string
 	status        string
@@ -45,8 +50,8 @@ type ListCtrl[T ListModel[C], C any] struct {
 	cursor        int
 	list          T
 	exitState     ExitState
-	debug         io.Writer
-	filter        *ListFilter
+	filter        *ListFilter[C]
+	filteredItems []*Choice[C]
 	// TODO help delegates
 }
 
@@ -62,8 +67,17 @@ const (
 )
 
 func NewListCtrl[T ListModel[C], C any](list T) *ListCtrl[T, C] {
-	filter := &ListFilter{}
-	return &ListCtrl[T, C]{list: list, filter: filter}
+	var dump *os.File
+	if _, ok := os.LookupEnv("DEBUG"); ok {
+		var err error
+		dump, err = os.OpenFile("messages.log", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+		if err != nil {
+			os.Exit(1)
+		}
+	}
+	debug = dump
+	filter := &ListFilter[C]{}
+	return &ListCtrl[T, C]{list: list, filter: filter, filteredItems: list.Items()}
 }
 
 func (m *ListCtrl[T, C]) SetWidth(width int) {
@@ -77,6 +91,8 @@ func (m *ListCtrl[T, C]) SetHeight(height int) {
 func (m *ListCtrl[T, C]) View() string {
 	var s strings.Builder
 
+	spew.Fprintf(debug, "ListCtrl View: %s\n", m.filter.term)
+
 	choices := m.list.Items()
 	border := m.list.Style().DrawBorder
 	checkbox := m.list.Style().DrawCheckbox
@@ -87,8 +103,7 @@ func (m *ListCtrl[T, C]) View() string {
 		edgeOffset = int(m.height / 2)
 	}
 
-	// Fix var for end offset w/ or w/o border
-	endOffset := 0
+	endOffset := 0 // NOTE fixes end offset w/ or w/o border
 	offset := 0
 	width := m.width
 	height := m.height
@@ -118,25 +133,39 @@ func (m *ListCtrl[T, C]) View() string {
 
 	// Question + spacing
 	if hasQuestion {
-		s.WriteString(wrapWithBorder(border, m.question, len(m.question), width))
-		s.WriteString(wrapWithBorder(border, "", 0, width))
+		s.WriteString(wrapWithBorder(border, m.question, utils.StrLen(m.question), width))
 		height -= 1
 	}
 
-	spew.Fprintf(m.debug,
-		"cursor: %d, offset: %d, startOffset: %d, len: %d, height: %d, atEnd: %v\n",
-		m.cursor, edgeOffset, offset, len(choices), m.height, isCursorAtEndEdge,
-	)
+	status := m.status
+	if m.filter.mode == FilterFocused {
+		status = fmt.Sprintf("Type to filter: %s_", m.filter.term)
+	}
+	s.WriteString(wrapWithBorder(border, status, utils.StrLen(status), width))
+
+	// spew.Fprintf(debug,
+	// 	"cursor: %d, offset: %d, startOffset: %d, len: %d, height: %d, atEnd: %v\n",
+	// 	m.cursor, edgeOffset, offset, len(choices), m.height, isCursorAtEndEdge,
+	// )
 
 	// Row iteration
 	for row := range height {
 		i := m.cursor - edgeOffset + offset + row
-		selected := m.list.IsSelected(i)
+		if i >= len(m.filteredItems) {
+			s.WriteString(wrapWithBorder(border, "", 0, width))
+			continue
+		}
+		choice := m.filteredItems[i]
 		active := m.cursor == i
-		choice := choices[i]
+		selected := m.list.IsSelected(choice)
 
-		// TODO create & use row delegate
-		rowTxt, contentLen := viewRow(active, selected, checkbox, i, choice)
+		row := RowModel[C]{
+			choice:   choice,
+			selected: selected,
+			active:   active,
+			checkbox: checkbox,
+		}
+		rowTxt, contentLen := row.Render()
 		rowLen := contentLen
 
 		if border {
@@ -171,7 +200,23 @@ func wrapWithBorder(border bool, s string, size int, width int) string {
 
 func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
-	spew.Fprintf(m.debug, "msg: %v\n", msg)
+	spew.Fprintf(debug, "msg: %v\n", msg)
+
+	if m.filter.mode == FilterFocused {
+		switch msg := msg.(type) {
+		case FilterTermChange:
+			spew.Fprintf(debug, "FilterTermChange: %v\n", msg)
+			items := m.list.Items()
+			m.filteredItems = m.filter.Filter(items)
+			if m.cursor >= len(m.filteredItems) {
+				cmds = append(cmds, m.MoveCursor(0))
+			}
+		}
+		filter, cmd := m.filter.Update(msg)
+		m.filter = filter
+		cmds = append(cmds, cmd)
+		return m, tea.Batch(cmds...)
+	}
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -182,13 +227,13 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		// TODO include header, footer
 		m.SetHeight(msg.Height - rem)
-	case tea.KeyMsg:
-
-		if m.filter.mode == FilterFocused {
-			filter, cmd := m.filter.Update(msg)
-			m.filter = filter
-			return m, cmd
+	case FilterModeChange:
+		spew.Fprintf(debug, "FilterModeChange: %v\n", msg)
+		if msg == FilterInactive {
+			m.filteredItems = m.list.Items()
 		}
+		cmds = append(cmds, m.MoveCursor(0))
+	case tea.KeyMsg:
 
 		switch msg.String() {
 		// TODO use bound config keys
@@ -204,7 +249,8 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right", "pgdown":
 			return m, m.MoveCursor(10)
 		case " ":
-			return m, m.Select(m.cursor)
+			choice := m.filteredItems[m.cursor]
+			return m, m.Select(choice)
 		case "enter":
 			m.exitState = 0
 			return m, tea.Quit
@@ -224,18 +270,26 @@ func (m *ListCtrl[T, C]) Init() tea.Cmd {
 	return nil
 }
 
-func (m *ListCtrl[T, C]) Select(i int) tea.Cmd {
-	m.list.Select(i)
+func (m *ListCtrl[T, C]) Select(choice *Choice[C]) tea.Cmd {
+	m.list.Select(choice)
 	return nil
 }
 
 func (m *ListCtrl[T, C]) MoveCursor(amount int) tea.Cmd {
 	m.cursor += amount
-	if m.cursor >= len(m.list.Items()) {
-		m.cursor = m.cursor - len(m.list.Items())
+	size := len(m.filteredItems)
+	if m.cursor >= size {
+		m.cursor = m.cursor - size
 	}
 	if m.cursor < 0 {
-		m.cursor = m.cursor + len(m.list.Items())
+		m.cursor = m.cursor + size
+	}
+	// second check, list size changed - force within bounds
+	if m.cursor >= size {
+		m.cursor = size - 1
+	}
+	if m.cursor < 0 {
+		m.cursor = 0
 	}
 	return nil
 }

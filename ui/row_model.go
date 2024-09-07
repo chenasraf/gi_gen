@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	"github.com/rivo/uniseg"
+	"github.com/chenasraf/utils"
 )
 
 const (
@@ -11,7 +11,12 @@ const (
 	CURSOR    = "▶"
 )
 
-func viewRow[T any](active bool, selected bool, checkbox bool, i int, choice *Choice[T]) (string, int) {
+type RowModel[T any] struct {
+	selected, checkbox, active bool
+	choice                     *Choice[T]
+}
+
+func (m *RowModel[T]) Render() (string, int) {
 	var (
 		s       strings.Builder
 		tok     Colored
@@ -20,20 +25,17 @@ func viewRow[T any](active bool, selected bool, checkbox bool, i int, choice *Ch
 		checked = " "
 	)
 
-	if active {
+	if m.active {
 		cursor = CURSOR
-		// cursor_ = ">"
 	}
-	if selected {
-		// checked = "x"
-		// v
+	if m.selected {
 		checked = CHECKMARK
 	}
 
 	s.WriteString(cursor)
-	c += uniseg.GraphemeClusterCount(cursor)
+	c += utils.StrLen(cursor)
 
-	if checkbox {
+	if m.checkbox {
 		tok = NewColored(ColorBlue, "[")
 		s.WriteString(tok.String())
 		c += tok.TextLength()
@@ -47,25 +49,13 @@ func viewRow[T any](active bool, selected bool, checkbox bool, i int, choice *Ch
 		c += tok.TextLength()
 	}
 
-	if selected {
-		tok = NewColored(ColorReset, choice.Label)
+	if m.selected {
+		tok = NewColored(ColorReset, m.choice.Label)
 	} else {
-		tok = NewColored(ColorDim, choice.Label)
+		tok = NewColored(ColorDim, m.choice.Label)
 	}
 	s.WriteString(tok.String())
 	c += tok.TextLength()
 
 	return s.String(), c
-}
-
-type ViewWindow[T any] struct {
-	maxWidth     int
-	height       int
-	offset       int
-	isSelected   func(int) bool
-	cursor       int
-	lastMovement int
-	choices      []*Choice[T]
-	checkbox     bool
-	border       bool
 }
