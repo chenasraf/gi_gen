@@ -16,6 +16,8 @@ type ListModel[T any] interface {
 	// TODO maybe return tea.Cmd in these so more behavior can be added
 	Items() []*Choice[T]
 	Select(choice *Choice[T])
+	ClearSelected()
+	SelectAll()
 	GetSelectedCount() int
 	IsSelected(choice *Choice[T]) bool
 	Style() ListStyle
@@ -25,13 +27,21 @@ type ListModel[T any] interface {
 type ListStyle struct {
 	// offset from/until which to scroll the list with
 	// closer to the edge than that, and scrolling is stuck
-	EdgeOffset   int
-	DrawBorder   bool
-	DrawCheckbox bool
+	EdgeOffset    int
+	DrawBorder    bool
+	DrawCheckbox  bool
+	FilterEnabled bool
+	StatusEnabled bool
+	HelpEnabled   bool
 }
 
 func DefaultListStyle() ListStyle {
-	return ListStyle{EdgeOffset: -1}
+	return ListStyle{
+		EdgeOffset:    -1,
+		FilterEnabled: true,
+		StatusEnabled: true,
+		HelpEnabled:   true,
+	}
 }
 
 type ExitState int
@@ -43,15 +53,14 @@ const (
 
 var debug io.Writer
 
-type ListCtrl[T ListModel[C], C any] struct {
+type ListCtrl[T ListModel[C], C comparable] struct {
 	question      string
-	status        string
 	width, height int
 	cursor        int
 	list          T
 	exitState     ExitState
 	filter        *ListFilter[C]
-	filteredItems []*Choice[C]
+	items         []*Choice[C]
 	// TODO help delegates
 }
 
@@ -66,7 +75,7 @@ const (
 	BORDER_VERTICAL     = "│"
 )
 
-func NewListCtrl[T ListModel[C], C any](list T) *ListCtrl[T, C] {
+func NewListCtrl[T ListModel[C], C comparable](list T) *ListCtrl[T, C] {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DEBUG"); ok {
 		var err error
@@ -77,7 +86,11 @@ func NewListCtrl[T ListModel[C], C any](list T) *ListCtrl[T, C] {
 	}
 	debug = dump
 	filter := &ListFilter[C]{}
-	return &ListCtrl[T, C]{list: list, filter: filter, filteredItems: list.Items()}
+	return &ListCtrl[T, C]{
+		list:   list,
+		filter: filter,
+		items:  list.Items(),
+	}
 }
 
 func (m *ListCtrl[T, C]) SetWidth(width int) {
@@ -114,16 +127,6 @@ func (m *ListCtrl[T, C]) View() string {
 		endOffset += 1
 	}
 
-	// Sticky behavior - lock scroll when close to list edges
-	isCursorAtStartEdge := m.cursor < edgeOffset
-	isCursorAtEndEdge := m.cursor > len(choices)-height+edgeOffset
-	if isCursorAtStartEdge {
-		offset = int(math.Abs(float64(m.cursor - edgeOffset)))
-	}
-	if isCursorAtEndEdge {
-		offset = len(choices) - m.cursor - height + edgeOffset + endOffset
-	}
-
 	// Top border
 	if border && width > 1 {
 		s.WriteString(BORDER_TOP_LEFT)
@@ -137,25 +140,37 @@ func (m *ListCtrl[T, C]) View() string {
 		height -= 1
 	}
 
-	status := m.status
-	if m.filter.mode == FilterFocused {
-		status = fmt.Sprintf("Type to filter: %s_", m.filter.term)
+	status, statusLen := RenderStatusBar[T, C](m)
+	if statusLen > 0 {
+		height -= 1
+		// endOffset += 1
+		s.WriteString(wrapWithBorder(border, status, statusLen, width))
 	}
-	s.WriteString(wrapWithBorder(border, status, utils.StrLen(status), width))
+	s.WriteString(wrapWithBorder(border, "", 0, width))
 
 	// spew.Fprintf(debug,
 	// 	"cursor: %d, offset: %d, startOffset: %d, len: %d, height: %d, atEnd: %v\n",
 	// 	m.cursor, edgeOffset, offset, len(choices), m.height, isCursorAtEndEdge,
 	// )
 
+	// Sticky behavior - lock scroll when close to list edges
+	isCursorAtStartEdge := m.cursor < edgeOffset
+	isCursorAtEndEdge := m.cursor > len(choices)-height+edgeOffset
+	if isCursorAtStartEdge {
+		offset = int(math.Abs(float64(m.cursor - edgeOffset)))
+	}
+	if isCursorAtEndEdge {
+		offset = len(choices) - m.cursor - height + edgeOffset + endOffset
+	}
+
 	// Row iteration
 	for row := range height {
 		i := m.cursor - edgeOffset + offset + row
-		if i >= len(m.filteredItems) {
+		if i >= len(m.items) {
 			s.WriteString(wrapWithBorder(border, "", 0, width))
 			continue
 		}
-		choice := m.filteredItems[i]
+		choice := m.items[i]
 		active := m.cursor == i
 		selected := m.list.IsSelected(choice)
 
@@ -184,6 +199,45 @@ func (m *ListCtrl[T, C]) View() string {
 	return s.String()
 }
 
+func RenderStatusBar[T ListModel[C], C comparable](m *ListCtrl[T, C]) (string, int) {
+	var (
+		s   strings.Builder
+		c   int
+		tok Colored
+	)
+	txt := ""
+	color := ColorDim
+
+	if m.filter.mode == FilterFocused {
+		color = ColorYellow
+		txt += fmt.Sprintf("Type to filter: %s_", m.filter.term)
+	} else {
+		txt += fmt.Sprintf("%d selected | %d visible", m.list.GetSelectedCount(), len(m.items))
+	}
+
+	if m.filter.mode == FilterActive {
+		txt += fmt.Sprintf(" | %d total | ", len(m.list.Items()))
+	}
+
+	tok = NewColored(color, txt)
+	s.WriteString(tok.String())
+	c += tok.TextLength()
+
+	if m.filter.mode == FilterActive {
+		txt = "Filtering: "
+		tok = NewColored(ColorDim, txt)
+		s.WriteString(tok.String())
+		c += tok.TextLength()
+
+		txt = m.filter.term
+		tok = NewColored(ColorYellow, txt)
+		s.WriteString(tok.String())
+		c += tok.TextLength()
+	}
+
+	return s.String(), c
+}
+
 func wrapWithBorder(border bool, s string, size int, width int) string {
 	if !border || width < 2 {
 		return s + "\n"
@@ -207,8 +261,8 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case FilterTermChange:
 			spew.Fprintf(debug, "FilterTermChange: %v\n", msg)
 			items := m.list.Items()
-			m.filteredItems = m.filter.Filter(items)
-			if m.cursor >= len(m.filteredItems) {
+			m.items = m.filter.Filter(items)
+			if m.cursor >= len(m.items) {
 				cmds = append(cmds, m.MoveCursor(0))
 			}
 		}
@@ -230,7 +284,7 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case FilterModeChange:
 		spew.Fprintf(debug, "FilterModeChange: %v\n", msg)
 		if msg == FilterInactive {
-			m.filteredItems = m.list.Items()
+			m.items = m.list.Items()
 		}
 		cmds = append(cmds, m.MoveCursor(0))
 	case tea.KeyMsg:
@@ -249,8 +303,16 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "right", "pgdown":
 			return m, m.MoveCursor(10)
 		case " ":
-			choice := m.filteredItems[m.cursor]
+			choice := m.items[m.cursor]
 			return m, m.Select(choice)
+		case "esc":
+			if m.filter.mode == FilterActive {
+				return m, tea.Batch(m.filter.SetInactive, m.filter.ClearTerm)
+			}
+		case "a":
+			return m, m.SelectAll
+		case "c":
+			return m, m.ClearSelected
 		case "enter":
 			m.exitState = 0
 			return m, tea.Quit
@@ -270,14 +332,28 @@ func (m *ListCtrl[T, C]) Init() tea.Cmd {
 	return nil
 }
 
+type ListUpdateMsg int
+
 func (m *ListCtrl[T, C]) Select(choice *Choice[C]) tea.Cmd {
-	m.list.Select(choice)
-	return nil
+	return func() tea.Msg {
+		m.list.Select(choice)
+		return ListUpdateMsg(m.list.GetSelectedCount())
+	}
+}
+
+func (m *ListCtrl[T, C]) ClearSelected() tea.Msg {
+	m.list.ClearSelected()
+	return ListUpdateMsg(0)
+}
+
+func (m *ListCtrl[T, C]) SelectAll() tea.Msg {
+	m.list.SelectAll()
+	return ListUpdateMsg(len(m.list.Items()))
 }
 
 func (m *ListCtrl[T, C]) MoveCursor(amount int) tea.Cmd {
 	m.cursor += amount
-	size := len(m.filteredItems)
+	size := len(m.items)
 	if m.cursor >= size {
 		m.cursor = m.cursor - size
 	}

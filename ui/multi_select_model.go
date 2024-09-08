@@ -5,6 +5,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type MultiSelectModel[T comparable] struct {
@@ -21,6 +22,19 @@ func (m *MultiSelectModel[T]) Select(choice *Choice[T]) {
 		delete(m.selected, choice.Value)
 	} else {
 		m.selected[choice.Value] = struct{}{}
+	}
+}
+
+func (m *MultiSelectModel[T]) ClearSelected() {
+	m.selected = make(map[T]struct{})
+}
+
+func (m *MultiSelectModel[T]) SelectAll() {
+	spew.Fprintf(debug, "SelectAll %v\n", m.items)
+	for _, choice := range m.items {
+		if _, exists := m.selected[choice.Value]; !exists {
+			m.selected[choice.Value] = struct{}{}
+		}
 	}
 }
 
