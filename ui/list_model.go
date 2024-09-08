@@ -113,18 +113,23 @@ func (m *ListCtrl[T, C]) View() string {
 	// Edge offset - no scroll when closer than X to the start/end edge
 	edgeOffset := m.list.Style().EdgeOffset
 	if edgeOffset == -1 {
-		edgeOffset = int(m.height / 2)
+		edgeOffset = int(math.Floor(float64(m.height) / 2))
 	}
 
 	endOffset := 0 // NOTE fixes end offset w/ or w/o border
 	offset := 0
 	width := m.width
 	height := m.height
+	topHeight := 0
+	bottomHeight := 0
 	hasQuestion := len(m.question) > 0
 
 	// NOTE prevents list visual overflow
 	if hasQuestion {
-		endOffset += 1
+		endOffset++
+	}
+	if edgeOffset%2 != 0 {
+		edgeOffset--
 	}
 
 	// Top border
@@ -137,35 +142,47 @@ func (m *ListCtrl[T, C]) View() string {
 	// Question + spacing
 	if hasQuestion {
 		s.WriteString(wrapWithBorder(border, m.question, utils.StrLen(m.question), width))
-		height -= 1
+		topHeight++
 	}
 
 	status, statusLen := RenderStatusBar[T, C](m)
 	if statusLen > 0 {
-		height -= 1
-		// endOffset += 1
+		topHeight++
 		s.WriteString(wrapWithBorder(border, status, statusLen, width))
 	}
+	topHeight++
 	s.WriteString(wrapWithBorder(border, "", 0, width))
 
-	// spew.Fprintf(debug,
-	// 	"cursor: %d, offset: %d, startOffset: %d, len: %d, height: %d, atEnd: %v\n",
-	// 	m.cursor, edgeOffset, offset, len(choices), m.height, isCursorAtEndEdge,
-	// )
+	help := "j/k/up/down - move cursor    space - toggle    enter - done"
+	bottomHeight += 2
+
+	listHeight := height - topHeight - bottomHeight
+
+	spew.Fprintf(debug, "height %d, tHeight %d, bHeight %d, edgeOffset %d\n", height, topHeight, bottomHeight, edgeOffset)
 
 	// Sticky behavior - lock scroll when close to list edges
-	isCursorAtStartEdge := m.cursor < edgeOffset
-	isCursorAtEndEdge := m.cursor > len(choices)-height+edgeOffset
-	if isCursorAtStartEdge {
-		offset = int(math.Abs(float64(m.cursor - edgeOffset)))
-	}
+	startEdge := edgeOffset - (topHeight - 1)
+	endEdge := len(choices) - edgeOffset + bottomHeight
+	isCursorAtStartEdge := m.cursor < startEdge
+	isCursorAtEndEdge := m.cursor >= endEdge
+
 	if isCursorAtEndEdge {
-		offset = len(choices) - m.cursor - height + edgeOffset + endOffset
+		// offset = -(len(choices) - m.cursor - height + edgeOffset + topHeight - bottomHeight)
+		offset = m.cursor - endEdge + 1
+	}
+	botOffset := 0
+	if !isCursorAtStartEdge && edgeOffset%2 == 0 {
+		botOffset = 1
 	}
 
+	spew.Fprintf(debug, "cur: %d, atStartEdge %s, atEndEdge %s, offset %d\n", m.cursor, isCursorAtStartEdge, isCursorAtEndEdge, offset)
+
+	min := int(math.Max(0, float64(m.cursor)-float64(listHeight)/2))
+	max := int(math.Max(float64(m.cursor)+float64(listHeight)/2, float64(listHeight)))
+
 	// Row iteration
-	for row := range height {
-		i := m.cursor - edgeOffset + offset + row
+	for row := range max - min {
+		i := min + row - offset + botOffset
 		if i >= len(m.items) {
 			s.WriteString(wrapWithBorder(border, "", 0, width))
 			continue
@@ -188,6 +205,10 @@ func (m *ListCtrl[T, C]) View() string {
 		}
 		s.WriteString(wrapWithBorder(border, rowTxt, contentLen, width))
 	}
+
+	tok := NewColored(ColorDim, help)
+	s.WriteString(wrapWithBorder(border, "", 0, width))
+	s.WriteString(wrapWithBorder(border, tok.String(), tok.TextLength(), width))
 
 	// Bottom border
 	if border && width > 1 {
