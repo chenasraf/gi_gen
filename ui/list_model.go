@@ -2,7 +2,6 @@ package ui
 
 import (
 	"io"
-	"math"
 	"os"
 	"strings"
 
@@ -10,47 +9,64 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+// ListModel is an interface that defines the methods required for a list model.
+// It includes methods for managing items, selection, and updating the list.
 type ListModel[T any] interface {
-	// TODO maybe return tea.Cmd in these so more behavior can be added
+	// Items returns a slice of choices in the list.
 	Items() []*Choice[T]
+	// Select marks a choice as selected.
 	Select(choice *Choice[T])
+	// ClearSelected clears all selected choices.
 	ClearSelected()
+	// SelectAll selects all choices in the list.
 	SelectAll()
+	// GetSelectedCount returns the count of selected choices.
 	GetSelectedCount() int
+	// IsSelected checks if a choice is selected.
 	IsSelected(choice *Choice[T]) bool
+	// Style returns the style settings for the list.
 	Style() ListStyle
+	// Update handles messages and updates the list state.
 	Update(msg tea.Msg) (ListModel[T], tea.Cmd)
 }
 
+// ListStyle defines the visual style and behavior settings for the list.
 type ListStyle struct {
-	// offset from/until which to scroll the list with
-	// closer to the edge than that, and scrolling is stuck
-	EdgeOffset    int
-	DrawBorder    bool
-	DrawCheckbox  bool
+	// DrawBorder indicates whether to draw a border around the list.
+	DrawBorder bool
+	// DrawCheckbox indicates whether to draw checkboxes for selections.
+	DrawCheckbox bool
+	// FilterEnabled indicates whether filtering is enabled.
 	FilterEnabled bool
+	// StatusEnabled indicates whether status display is enabled.
 	StatusEnabled bool
-	HelpEnabled   bool
+	// HelpEnabled indicates whether help display is enabled.
+	HelpEnabled bool
 }
 
+// DefaultListStyle returns a ListStyle with default settings.
 func DefaultListStyle() ListStyle {
 	return ListStyle{
-		EdgeOffset:    -1,
 		FilterEnabled: true,
 		StatusEnabled: true,
 		HelpEnabled:   true,
 	}
 }
 
+// ExitState represents the state of exiting the list control.
 type ExitState int
 
 const (
+	// ExitNormal indicates a normal exit state.
 	ExitNormal = iota
+	// ExitQuit indicates an exit state due to quitting.
 	ExitQuit
 )
 
 var debug io.Writer
 
+// ListCtrl is a controller for managing a list of items with various functionalities
+// such as filtering, selecting, and navigating through the list.
 type ListCtrl[T ListModel[C], C comparable] struct {
 	question       string
 	width, height  int
@@ -63,6 +79,7 @@ type ListCtrl[T ListModel[C], C comparable] struct {
 	filterHelpKeys []HelpEntry
 }
 
+// Border characters used for drawing the list borders.
 const (
 	BORDER_TOP_LEFT     = "┌"
 	BORDER_BOTTOM_LEFT  = "└"
@@ -72,6 +89,7 @@ const (
 	BORDER_VERTICAL     = "│"
 )
 
+// NewListCtrl creates a new ListCtrl instance with the given list model.
 func NewListCtrl[T ListModel[C], C comparable](list T) *ListCtrl[T, C] {
 	var dump *os.File
 	if _, ok := os.LookupEnv("DEBUG"); ok {
@@ -107,28 +125,11 @@ func NewListCtrl[T ListModel[C], C comparable](list T) *ListCtrl[T, C] {
 	}
 }
 
+// View renders the list view as a string.
 func (m *ListCtrl[T, C]) View() string {
 	var s strings.Builder
-
 	border := m.list.Style().DrawBorder
-
-	// Edge offset - no scroll when closer than X to the start/end edge
-	edgeOffset := m.list.Style().EdgeOffset
-	if edgeOffset == -1 {
-		edgeOffset = int(math.Floor(float64(m.height) / 2))
-	}
-
-	endOffset := 0 // NOTE fixes end offset w/ or w/o border
 	width := m.width
-	hasQuestion := len(m.question) > 0
-
-	// NOTE prevents list visual overflow
-	if hasQuestion {
-		endOffset++
-	}
-	if edgeOffset%2 != 0 {
-		edgeOffset--
-	}
 
 	// Top border
 	if border && width > 1 {
@@ -137,6 +138,7 @@ func (m *ListCtrl[T, C]) View() string {
 		s.WriteString(BORDER_TOP_RIGHT + "\n")
 	}
 
+	// Content
 	s.WriteString(m.RenderHeader())
 	s.WriteString(m.RenderList())
 	s.WriteString(m.RenderFooter())
@@ -151,6 +153,7 @@ func (m *ListCtrl[T, C]) View() string {
 	return s.String()
 }
 
+// Update handles messages and updates the list state accordingly.
 func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	spew.Fprintf(debug, "msg: %v\n", msg)
@@ -178,7 +181,6 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.list.Style().DrawBorder {
 			rem += 2
 		}
-		// TODO include header, footer
 		m.SetHeight(msg.Height - rem)
 	case FilterModeChange:
 		spew.Fprintf(debug, "FilterModeChange: %v\n", msg)
@@ -231,8 +233,10 @@ func (m *ListCtrl[T, C]) Init() tea.Cmd {
 	return nil
 }
 
+// ListUpdateMsg is a type used for messages that update the list.
 type ListUpdateMsg int
 
+// Select selects a choice from the list and returns a command.
 func (m *ListCtrl[T, C]) Select(choice *Choice[C]) tea.Cmd {
 	return func() tea.Msg {
 		m.list.Select(choice)
@@ -240,16 +244,19 @@ func (m *ListCtrl[T, C]) Select(choice *Choice[C]) tea.Cmd {
 	}
 }
 
+// ClearSelected clears all selected choices from the list and returns a message.
 func (m *ListCtrl[T, C]) ClearSelected() tea.Msg {
 	m.list.ClearSelected()
 	return ListUpdateMsg(0)
 }
 
+// SelectAll selects all choices in the list and returns a message.
 func (m *ListCtrl[T, C]) SelectAll() tea.Msg {
 	m.list.SelectAll()
 	return ListUpdateMsg(len(m.list.Items()))
 }
 
+// MoveCursor moves the cursor by the specified amount and returns a command.
 func (m *ListCtrl[T, C]) MoveCursor(amount int) tea.Cmd {
 	m.cursor += amount
 	size := len(m.items)
@@ -269,14 +276,17 @@ func (m *ListCtrl[T, C]) MoveCursor(amount int) tea.Cmd {
 	return nil
 }
 
+// SetWidth sets the width of the list.
 func (m *ListCtrl[T, C]) SetWidth(width int) {
 	m.width = width
 }
 
+// SetHeight sets the height of the list.
 func (m *ListCtrl[T, C]) SetHeight(height int) {
 	m.height = height
 }
 
+// wrapWithBorder wraps a string with a border if the border is enabled.
 func wrapWithBorder(border bool, s string, size int, width int) string {
 	if !border || width < 2 {
 		return s + "\n"

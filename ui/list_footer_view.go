@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	utils "github.com/chenasraf/goutils"
-	"github.com/davecgh/go-spew/spew"
 )
 
 type HelpEntry struct {
@@ -48,7 +47,6 @@ func (m *ListCtrl[T, C]) GetHelpColumnCount() int {
 	max += 2
 
 	fit := width / max
-	spew.Fprintf(debug, "[ColumnCount] width: %d, max: %d, fit: %d\n", width, max, fit)
 	return utils.MaxInt(fit, 1)
 }
 
@@ -69,7 +67,6 @@ func (m *ListCtrl[T, C]) RenderFooter() string {
 	c := 0
 	line := ""
 	fit := m.GetHelpColumnCount()
-	spew.Fprintf(debug, "fit: %d, width: %d\n", fit, width)
 
 	s.WriteString(wrapWithBorder(border, "", 0, width))
 
@@ -80,12 +77,10 @@ func (m *ListCtrl[T, C]) RenderFooter() string {
 
 		if !nextWillOverflow {
 			spacing := width/fit - cc
-			spew.Fprintf(debug, "width: %d, fit: %d, c: %d, spacing: %d\n", width, fit, cc, spacing)
 			sep := strings.Repeat(" ", utils.MaxInt(0, spacing))
 			str += sep
 			line += str
 			c += cc + len(sep)
-			spew.Fprintf(debug, "adding line: %s, c: %d, len: %d\n", str, c, len(line))
 		} else {
 			line += str
 			c += cc
@@ -101,7 +96,6 @@ func (m *ListCtrl[T, C]) RenderFooter() string {
 		lengths = append(lengths, c)
 	}
 	for i, line := range lines {
-		spew.Fprintf(debug, "printing line: %s, len: %d\n", line, lengths[i])
 		s.WriteString(wrapWithBorder(border, line, lengths[i], width))
 	}
 
