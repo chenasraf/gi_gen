@@ -65,11 +65,9 @@ type ListCtrl[T ListModel[C], C comparable] struct {
 }
 
 const (
-	BORDER_LEFT         = "│"
-	BORDER_RIGHT        = "│"
 	BORDER_TOP_LEFT     = "┌"
-	BORDER_TOP_RIGHT    = "┐"
 	BORDER_BOTTOM_LEFT  = "└"
+	BORDER_TOP_RIGHT    = "┐"
 	BORDER_BOTTOM_RIGHT = "┘"
 	BORDER_HORIZONTAL   = "─"
 	BORDER_VERTICAL     = "│"
@@ -93,22 +91,10 @@ func NewListCtrl[T ListModel[C], C comparable](list T) *ListCtrl[T, C] {
 	}
 }
 
-func (m *ListCtrl[T, C]) SetWidth(width int) {
-	m.width = width
-}
-
-func (m *ListCtrl[T, C]) SetHeight(height int) {
-	m.height = height
-}
-
 func (m *ListCtrl[T, C]) View() string {
 	var s strings.Builder
 
-	spew.Fprintf(debug, "ListCtrl View: %s\n", m.filter.term)
-
-	choices := m.list.Items()
 	border := m.list.Style().DrawBorder
-	checkbox := m.list.Style().DrawCheckbox
 
 	// Edge offset - no scroll when closer than X to the start/end edge
 	edgeOffset := m.list.Style().EdgeOffset
@@ -117,11 +103,7 @@ func (m *ListCtrl[T, C]) View() string {
 	}
 
 	endOffset := 0 // NOTE fixes end offset w/ or w/o border
-	offset := 0
 	width := m.width
-	height := m.height
-	topHeight := 0
-	bottomHeight := 0
 	hasQuestion := len(m.question) > 0
 
 	// NOTE prevents list visual overflow
@@ -139,35 +121,54 @@ func (m *ListCtrl[T, C]) View() string {
 		s.WriteString(BORDER_TOP_RIGHT + "\n")
 	}
 
-	// Question + spacing
+	s.WriteString(m.RenderHeader())
+	s.WriteString(m.RenderList())
+	s.WriteString(m.RenderFooter())
+
+	// Bottom border
+	if border && width > 1 {
+		s.WriteString(BORDER_BOTTOM_LEFT)
+		s.WriteString(strings.Repeat(BORDER_HORIZONTAL, width-2))
+		s.WriteString(BORDER_BOTTOM_RIGHT)
+	}
+
+	return s.String()
+}
+
+func (m *ListCtrl[T, C]) RenderList() string {
+	var s strings.Builder
+	height := m.ListHeight()
+	choices := m.list.Items()
+	border := m.list.Style().DrawBorder
+	checkbox := m.list.Style().DrawCheckbox
+
+	// Edge offset - no scroll when closer than X to the start/end edge
+	edgeOffset := m.list.Style().EdgeOffset
+	if edgeOffset == -1 {
+		edgeOffset = int(math.Floor(float64(m.height) / 2))
+	}
+
+	endOffset := 0 // NOTE fixes end offset w/ or w/o border
+	offset := 0
+	width := m.width
+	hasQuestion := len(m.question) > 0
+
+	// NOTE prevents list visual overflow
 	if hasQuestion {
-		s.WriteString(wrapWithBorder(border, m.question, utils.StrLen(m.question), width))
-		topHeight++
+		endOffset++
 	}
-
-	status, statusLen := RenderStatusBar[T, C](m)
-	if statusLen > 0 {
-		topHeight++
-		s.WriteString(wrapWithBorder(border, status, statusLen, width))
+	if edgeOffset%2 != 0 {
+		edgeOffset--
 	}
-	topHeight++
-	s.WriteString(wrapWithBorder(border, "", 0, width))
-
-	help := "j/k/up/down - move cursor      space - toggle      enter - done"
-	bottomHeight += 2
-
-	listHeight := height - topHeight - bottomHeight
-
-	spew.Fprintf(debug, "height %d, tHeight %d, bHeight %d, edgeOffset %d\n", height, topHeight, bottomHeight, edgeOffset)
 
 	// Sticky behavior - lock scroll when close to list edges
-	startEdge := edgeOffset - (topHeight - 1)
-	endEdge := len(choices) - edgeOffset + bottomHeight
+	startEdge := edgeOffset - (m.HeaderHeight() - 1)
+	endEdge := len(choices) - edgeOffset + m.FooterHeight()
 	isCursorAtStartEdge := m.cursor < startEdge
-	isCursorAtEndEdge := m.cursor >= endEdge
+	isCursorAtEndEdge := m.cursor >= endEdge+-1
 
 	if isCursorAtEndEdge {
-		offset = m.cursor - endEdge + 1
+		offset = m.cursor - endEdge + 2
 	}
 	botOffset := 0
 	if !isCursorAtStartEdge && edgeOffset%2 == 0 {
@@ -176,8 +177,8 @@ func (m *ListCtrl[T, C]) View() string {
 
 	spew.Fprintf(debug, "cur: %d, atStartEdge %s, atEndEdge %s, offset %d\n", m.cursor, isCursorAtStartEdge, isCursorAtEndEdge, offset)
 
-	min := int(math.Max(0, float64(m.cursor)-float64(listHeight)/2))
-	max := int(math.Max(float64(m.cursor)+float64(listHeight)/2, float64(listHeight))) + 1
+	min := int(math.Max(0, float64(m.cursor)-float64(height)/2))
+	max := int(math.Max(float64(m.cursor)+float64(height)/2, float64(height))) + 1
 
 	// Row iteration
 	for row := range max - min {
@@ -204,26 +205,28 @@ func (m *ListCtrl[T, C]) View() string {
 		}
 		s.WriteString(wrapWithBorder(border, rowTxt, contentLen, width))
 	}
-
-	tok := NewColored(ColorDim, help)
-	s.WriteString(wrapWithBorder(border, "", 0, width))
-	s.WriteString(wrapWithBorder(border, tok.String(), tok.TextLength(), width))
-
-	// Bottom border
-	if border && width > 1 {
-		s.WriteString(BORDER_BOTTOM_LEFT)
-		s.WriteString(strings.Repeat(BORDER_HORIZONTAL, width-2))
-		s.WriteString(BORDER_BOTTOM_RIGHT)
-	}
-
 	return s.String()
 }
 
-func RenderStatusBar[T ListModel[C], C comparable](m *ListCtrl[T, C]) (string, int) {
+func (m *ListCtrl[T, C]) RenderHeader() string {
+	hasQuestion := len(m.question) > 0
+	border := m.list.Style().DrawBorder
+	var s strings.Builder
+	if hasQuestion {
+		s.WriteString(wrapWithBorder(border, m.question, utils.StrLen(m.question), m.width))
+	}
+
+	status, statusLen := m.RenderStatusBar()
+	s.WriteString(wrapWithBorder(border, status, statusLen, m.width))
+	s.WriteString(wrapWithBorder(border, "", 0, m.width))
+	return s.String()
+}
+
+func (m *ListCtrl[T, C]) RenderStatusBar() (string, int) {
 	var (
 		s   strings.Builder
-		c   int
 		tok Colored
+		c   int
 	)
 	txt := ""
 	color := ColorDim
@@ -234,7 +237,6 @@ func RenderStatusBar[T ListModel[C], C comparable](m *ListCtrl[T, C]) (string, i
 	} else {
 		txt += fmt.Sprintf("%d selected | %d visible", m.list.GetSelectedCount(), len(m.items))
 	}
-
 	if m.filter.mode == FilterActive {
 		txt += fmt.Sprintf(" | %d total | ", len(m.list.Items()))
 	}
@@ -258,16 +260,30 @@ func RenderStatusBar[T ListModel[C], C comparable](m *ListCtrl[T, C]) (string, i
 	return s.String(), c
 }
 
+func (m *ListCtrl[T, C]) RenderFooter() string {
+	border := m.list.Style().DrawBorder
+	width := m.width
+	var s strings.Builder
+
+	help := "j/k/up/down - move cursor      space - toggle      enter - done"
+
+	tok := NewColored(ColorDim, help)
+	s.WriteString(wrapWithBorder(border, "", 0, width))
+	s.WriteString(wrapWithBorder(border, tok.String(), tok.TextLength(), width))
+
+	return s.String()
+}
+
 func wrapWithBorder(border bool, s string, size int, width int) string {
 	if !border || width < 2 {
 		return s + "\n"
 	}
 
 	var out strings.Builder
-	out.WriteString(BORDER_LEFT + " ")
+	out.WriteString(BORDER_VERTICAL + " ")
 	out.WriteString(s)
 	out.WriteString(strings.Repeat(" ", width-size-4)) // NOTE 4 = border+padding
-	out.WriteString(" " + BORDER_RIGHT + "\n")
+	out.WriteString(" " + BORDER_VERTICAL + "\n")
 
 	return out.String()
 }
@@ -388,4 +404,35 @@ func (m *ListCtrl[T, C]) MoveCursor(amount int) tea.Cmd {
 		m.cursor = 0
 	}
 	return nil
+}
+
+func (m *ListCtrl[T, C]) SetWidth(width int) {
+	m.width = width
+}
+
+func (m *ListCtrl[T, C]) SetHeight(height int) {
+	m.height = height
+}
+
+func (m *ListCtrl[T, C]) HeaderHeight() int {
+	h := 3
+	if len(m.question) == 0 {
+		h--
+	}
+	if !m.list.Style().StatusEnabled {
+		h--
+	}
+	return 3
+}
+
+func (m *ListCtrl[T, C]) FooterHeight() int {
+	h := 2
+	if !m.list.Style().HelpEnabled {
+		h--
+	}
+	return h
+}
+
+func (m *ListCtrl[T, C]) ListHeight() int {
+	return m.height - m.HeaderHeight() - m.FooterHeight()
 }
