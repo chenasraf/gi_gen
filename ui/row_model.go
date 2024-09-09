@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 const (

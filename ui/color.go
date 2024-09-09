@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 type Colored struct {

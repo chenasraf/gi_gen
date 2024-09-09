@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 type Choice[T any] struct {

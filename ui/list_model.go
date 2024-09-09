@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -153,7 +153,7 @@ func (m *ListCtrl[T, C]) View() string {
 	topHeight++
 	s.WriteString(wrapWithBorder(border, "", 0, width))
 
-	help := "j/k/up/down - move cursor    space - toggle    enter - done"
+	help := "j/k/up/down - move cursor      space - toggle      enter - done"
 	bottomHeight += 2
 
 	listHeight := height - topHeight - bottomHeight
@@ -167,7 +167,6 @@ func (m *ListCtrl[T, C]) View() string {
 	isCursorAtEndEdge := m.cursor >= endEdge
 
 	if isCursorAtEndEdge {
-		// offset = -(len(choices) - m.cursor - height + edgeOffset + topHeight - bottomHeight)
 		offset = m.cursor - endEdge + 1
 	}
 	botOffset := 0
@@ -178,7 +177,7 @@ func (m *ListCtrl[T, C]) View() string {
 	spew.Fprintf(debug, "cur: %d, atStartEdge %s, atEndEdge %s, offset %d\n", m.cursor, isCursorAtStartEdge, isCursorAtEndEdge, offset)
 
 	min := int(math.Max(0, float64(m.cursor)-float64(listHeight)/2))
-	max := int(math.Max(float64(m.cursor)+float64(listHeight)/2, float64(listHeight)))
+	max := int(math.Max(float64(m.cursor)+float64(listHeight)/2, float64(listHeight))) + 1
 
 	// Row iteration
 	for row := range max - min {

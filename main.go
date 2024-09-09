@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 func main() {

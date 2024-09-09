@@ -5,7 +5,7 @@ go 1.23.0
 require (
 	github.com/Cleverse/go-utilities/nullable v0.0.0-20240724230759-d8bb035f0513
 	github.com/charmbracelet/bubbletea v1.1.0
-	github.com/chenasraf/utils v0.0.0
+	github.com/chenasraf/goutils v0.0.0
 	github.com/davecgh/go-spew v1.1.1
 )
 
@@ -33,4 +33,4 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 )
 
-replace github.com/chenasraf/utils v0.0.0 => ../utils
+replace github.com/chenasraf/goutils v0.0.0 => ../goutils

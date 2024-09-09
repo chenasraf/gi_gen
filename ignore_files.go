@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 var ignoreLines = []string{

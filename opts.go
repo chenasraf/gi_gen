@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/Cleverse/go-utilities/nullable"
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 // OutputBehavior

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/chenasraf/gi_gen/ui"
-	"github.com/chenasraf/utils"
+	"github.com/chenasraf/goutils"
 )
 
 // Attempts to auto-select languages.
