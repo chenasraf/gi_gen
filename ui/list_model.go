@@ -1,14 +1,12 @@
 package ui
 
 import (
-	"fmt"
 	"io"
 	"math"
 	"os"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/chenasraf/goutils"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -63,7 +61,6 @@ type ListCtrl[T ListModel[C], C comparable] struct {
 	items          []*Choice[C]
 	listHelpKeys   []HelpEntry
 	filterHelpKeys []HelpEntry
-	// TODO help delegates
 }
 
 const (
@@ -152,251 +149,6 @@ func (m *ListCtrl[T, C]) View() string {
 	}
 
 	return s.String()
-}
-
-func (m *ListCtrl[T, C]) RenderList() string {
-	var s strings.Builder
-	height := m.ListHeight()
-	choices := m.list.Items()
-	border := m.list.Style().DrawBorder
-	checkbox := m.list.Style().DrawCheckbox
-
-	// Edge offset - no scroll when closer than X to the start/end edge
-	edgeOffset := m.list.Style().EdgeOffset
-	if edgeOffset == -1 {
-		edgeOffset = int(math.Floor(float64(m.height) / 2))
-	}
-
-	endOffset := 0 // NOTE fixes end offset w/ or w/o border
-	offset := 0
-	width := m.width
-	hasQuestion := len(m.question) > 0
-
-	// NOTE prevents list visual overflow
-	if hasQuestion {
-		endOffset++
-	}
-	if edgeOffset%2 != 0 {
-		edgeOffset--
-	}
-
-	// Sticky behavior - lock scroll when close to list edges
-	startEdge := edgeOffset - (m.HeaderHeight() - 1)
-	endEdge := len(choices) - edgeOffset + m.FooterHeight()
-	isCursorAtStartEdge := m.cursor < startEdge
-	isCursorAtEndEdge := m.cursor >= endEdge+-1
-
-	if isCursorAtEndEdge {
-		offset = m.cursor - endEdge + 2
-	}
-	botOffset := 0
-	if !isCursorAtStartEdge && edgeOffset%2 == 0 {
-		botOffset = 1
-	}
-
-	spew.Fprintf(debug, "cur: %d, atStartEdge %s, atEndEdge %s, offset %d\n", m.cursor, isCursorAtStartEdge, isCursorAtEndEdge, offset)
-
-	min := int(math.Max(0, float64(m.cursor)-float64(height)/2))
-	max := int(math.Max(float64(m.cursor)+float64(height)/2, float64(height))) + 1
-
-	// Row iteration
-	for row := range max - min {
-		i := min + row - offset + botOffset
-		if i >= len(m.items) {
-			s.WriteString(wrapWithBorder(border, "", 0, width))
-			continue
-		}
-		choice := m.items[i]
-		active := m.cursor == i
-		selected := m.list.IsSelected(choice)
-
-		row := RowModel[C]{
-			choice:   choice,
-			selected: selected,
-			active:   active,
-			checkbox: checkbox,
-		}
-		rowTxt, contentLen := row.Render()
-		rowLen := contentLen
-
-		if border {
-			rowLen += 3 // NOTE left/right borders + right padding
-		}
-		s.WriteString(wrapWithBorder(border, rowTxt, contentLen, width))
-	}
-	return s.String()
-}
-
-func (m *ListCtrl[T, C]) RenderHeader() string {
-	hasQuestion := len(m.question) > 0
-	border := m.list.Style().DrawBorder
-	var s strings.Builder
-	if hasQuestion {
-		s.WriteString(wrapWithBorder(border, m.question, utils.StrLen(m.question), m.width))
-	}
-
-	status, statusLen := m.RenderStatusBar()
-	s.WriteString(wrapWithBorder(border, status, statusLen, m.width))
-	s.WriteString(wrapWithBorder(border, "", 0, m.width))
-	return s.String()
-}
-
-func (m *ListCtrl[T, C]) RenderStatusBar() (string, int) {
-	var (
-		s   strings.Builder
-		tok Colored
-		c   int
-	)
-	txt := ""
-	color := ColorDim
-
-	if m.filter.mode == FilterFocused {
-		color = ColorYellow
-		txt += fmt.Sprintf("Type to filter: %s_", m.filter.term)
-	} else {
-		txt += fmt.Sprintf("%d selected | %d visible", m.list.GetSelectedCount(), len(m.items))
-	}
-	if m.filter.mode == FilterActive {
-		txt += fmt.Sprintf(" | %d total | ", len(m.list.Items()))
-	}
-
-	tok = NewColored(color, txt)
-	s.WriteString(tok.String())
-	c += tok.TextLength()
-
-	if m.filter.mode == FilterActive {
-		txt = "Filtering: "
-		tok = NewColored(ColorDim, txt)
-		s.WriteString(tok.String())
-		c += tok.TextLength()
-
-		txt = m.filter.term
-		tok = NewColored(ColorYellow, txt)
-		s.WriteString(tok.String())
-		c += tok.TextLength()
-	}
-
-	return s.String(), c
-}
-
-type HelpEntry struct {
-	key, action string
-}
-
-func NewHelpEntry(key, action string) HelpEntry {
-	return HelpEntry{key, action}
-}
-
-func renderHelpKey(entry HelpEntry) (string, int) {
-	var (
-		tok Colored
-		c   int
-	)
-	tok = NewColored(ColorWhite, entry.key)
-	keyStr := tok.String()
-	c += tok.TextLength()
-
-	tok = NewColored(ColorDim, entry.action)
-	actionStr := tok.String()
-	c += tok.TextLength()
-	c += 2
-	return fmt.Sprintf("%s  %s", keyStr, actionStr), c
-}
-
-func (m *ListCtrl[T, C]) GetHelpColumnCount() int {
-	max := 0
-	for _, key := range m.ActiveHelpKeys() {
-		if _, cc := renderHelpKey(key); cc > max {
-			max = cc
-		}
-	}
-	width := m.width
-	if m.list.Style().DrawBorder {
-		width -= 2
-	}
-	// NOTE 2 spaces min between items
-	max += 2
-
-	fit := width / max
-	spew.Fprintf(debug, "[ColumnCount] width: %d, max: %d, fit: %d\n", width, max, fit)
-	return utils.MaxInt(fit, 1)
-}
-
-func (m *ListCtrl[T, C]) GetHelpRowCount() int {
-	fit := m.GetHelpColumnCount()
-	return int(math.Ceil(float64(len(m.listHelpKeys)) / float64(fit)))
-}
-
-func (m *ListCtrl[T, C]) RenderFooter() string {
-	border := m.list.Style().DrawBorder
-	width := m.width
-	var s strings.Builder
-
-	var (
-		lines   []string
-		lengths []int
-	)
-	c := 0
-	line := ""
-	fit := m.GetHelpColumnCount()
-	spew.Fprintf(debug, "fit: %d, width: %d\n", fit, width)
-
-	s.WriteString(wrapWithBorder(border, "", 0, width))
-
-	for i, key := range m.ActiveHelpKeys() {
-		str, cc := renderHelpKey(key)
-
-		nextWillOverflow := (i+1)%fit == 0
-
-		if !nextWillOverflow {
-			spacing := width/fit - cc
-			spew.Fprintf(debug, "width: %d, fit: %d, c: %d, spacing: %d\n", width, fit, cc, spacing)
-			sep := strings.Repeat(" ", utils.MaxInt(0, spacing))
-			str += sep
-			line += str
-			c += cc + len(sep)
-			spew.Fprintf(debug, "adding line: %s, c: %d, len: %d\n", str, c, len(line))
-		} else {
-			line += str
-			c += cc
-			lines = append(lines, line)
-			lengths = append(lengths, c)
-			line = ""
-			c = 0
-		}
-	}
-
-	if len(line) > 0 {
-		lines = append(lines, line)
-		lengths = append(lengths, c)
-	}
-	for i, line := range lines {
-		spew.Fprintf(debug, "printing line: %s, len: %d\n", line, lengths[i])
-		s.WriteString(wrapWithBorder(border, line, lengths[i], width))
-	}
-
-	return s.String()
-}
-
-func (m *ListCtrl[T, C]) ActiveHelpKeys() []HelpEntry {
-	if m.filter.mode == FilterFocused {
-		return m.filterHelpKeys
-	}
-	return m.listHelpKeys
-}
-
-func wrapWithBorder(border bool, s string, size int, width int) string {
-	if !border || width < 2 {
-		return s + "\n"
-	}
-
-	var out strings.Builder
-	out.WriteString(BORDER_VERTICAL + " ")
-	out.WriteString(s)
-	out.WriteString(strings.Repeat(" ", width-size-4)) // NOTE 4 = border+padding
-	out.WriteString(" " + BORDER_VERTICAL + "\n")
-
-	return out.String()
 }
 
 func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -525,28 +277,16 @@ func (m *ListCtrl[T, C]) SetHeight(height int) {
 	m.height = height
 }
 
-func (m *ListCtrl[T, C]) HeaderHeight() int {
-	h := 3
-	if len(m.question) == 0 {
-		h--
-	}
-	if !m.list.Style().StatusEnabled {
-		h--
-	}
-	return 3
-}
-
-func (m *ListCtrl[T, C]) FooterHeight() int {
-	rowCount := m.GetHelpRowCount()
-
-	h := 0
-	if m.list.Style().HelpEnabled {
-		h += rowCount + 1
+func wrapWithBorder(border bool, s string, size int, width int) string {
+	if !border || width < 2 {
+		return s + "\n"
 	}
 
-	return h
-}
+	var out strings.Builder
+	out.WriteString(BORDER_VERTICAL + " ")
+	out.WriteString(s)
+	out.WriteString(strings.Repeat(" ", width-size-4)) // NOTE 4 = border+padding
+	out.WriteString(" " + BORDER_VERTICAL + "\n")
 
-func (m *ListCtrl[T, C]) ListHeight() int {
-	return m.height - m.HeaderHeight() - m.FooterHeight()
+	return out.String()
 }
