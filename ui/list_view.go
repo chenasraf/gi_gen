@@ -33,7 +33,7 @@ func (m *ListCtrl[T, C]) RenderList() string {
 	// Row iteration
 	for l := range max - min {
 		row := min + l
-		spew.Fprintf(debug, "row %d, len: %d\n", row, len(m.items))
+		spew.Fprintf(debug, "row: %d, min: %d, max: %d, len: %d\n", row, min, max, len(m.items))
 		if row >= len(m.items) {
 			s.WriteString(wrapWithBorder(border, "", 0, width))
 			continue

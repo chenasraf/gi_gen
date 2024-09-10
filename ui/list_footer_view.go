@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	utils "github.com/chenasraf/goutils"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type HelpEntry struct {
@@ -52,7 +53,7 @@ func (m *ListCtrl[T, C]) GetHelpColumnCount() int {
 
 func (m *ListCtrl[T, C]) GetHelpRowCount() int {
 	fit := m.GetHelpColumnCount()
-	return int(math.Ceil(float64(len(m.listHelpKeys)) / float64(fit)))
+	return int(math.Ceil(float64(len(m.ActiveHelpKeys())) / float64(fit)))
 }
 
 func (m *ListCtrl[T, C]) RenderFooter() string {
@@ -106,6 +107,9 @@ func (m *ListCtrl[T, C]) ActiveHelpKeys() []HelpEntry {
 	if m.filter.mode == FilterFocused {
 		return m.filterHelpKeys
 	}
+	if m.helpActive {
+		return m.fullHelpKeys
+	}
 	return m.listHelpKeys
 }
 
@@ -116,6 +120,8 @@ func (m *ListCtrl[T, C]) FooterHeight() int {
 	if m.list.Style().HelpEnabled {
 		h += rowCount + 1
 	}
+
+	spew.Fprintf(debug, "FooterHeight: %d, rows: %d\n", h, rowCount)
 
 	return h
 }

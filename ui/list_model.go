@@ -3,9 +3,11 @@ package ui
 import (
 	"io"
 	"os"
+	"reflect"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	utils "github.com/chenasraf/goutils"
 	"github.com/davecgh/go-spew/spew"
 )
 
@@ -73,10 +75,12 @@ type ListCtrl[T ListModel[C], C comparable] struct {
 	cursor         int
 	list           T
 	exitState      ExitState
+	helpActive     bool
 	filter         *ListFilter[C]
 	items          []*Choice[C]
 	listHelpKeys   []HelpEntry
 	filterHelpKeys []HelpEntry
+	fullHelpKeys   []HelpEntry
 }
 
 // Border characters used for drawing the list borders.
@@ -106,12 +110,22 @@ func NewListCtrl[T ListModel[C], C comparable](list T) *ListCtrl[T, C] {
 		NewHelpEntry("space", "toggle"),
 		NewHelpEntry("enter", "confirm"),
 		NewHelpEntry("/", "search"),
-		// NewHelpEntry("a", "select all"),
-		// NewHelpEntry("c", "clear selection"),
+		NewHelpEntry("?", "help"),
 	}
 	filterHelpKeys := []HelpEntry{
 		NewHelpEntry("esc", "clear filter"),
 		NewHelpEntry("enter", "confirm"),
+	}
+	fullHelpKeys := []HelpEntry{
+		NewHelpEntry("j/k/up/down", "move up/down"),
+		NewHelpEntry("h/l/left/right/pgup/pgdown", "move page up/down"),
+		NewHelpEntry("space", "toggle"),
+		NewHelpEntry("enter", "confirm"),
+		NewHelpEntry("/", "search"),
+		NewHelpEntry("?", "close help"),
+		NewHelpEntry("a", "select all"),
+		NewHelpEntry("c", "clear selection"),
+		NewHelpEntry("esc", "clear filter"),
 	}
 
 	return &ListCtrl[T, C]{
@@ -122,6 +136,7 @@ func NewListCtrl[T ListModel[C], C comparable](list T) *ListCtrl[T, C] {
 		items:          list.Items(),
 		listHelpKeys:   listHelpKeys,
 		filterHelpKeys: filterHelpKeys,
+		fullHelpKeys:   fullHelpKeys,
 	}
 }
 
@@ -156,7 +171,7 @@ func (m *ListCtrl[T, C]) View() string {
 // Update handles messages and updates the list state accordingly.
 func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
-	spew.Fprintf(debug, "msg: %v\n", msg)
+	spew.Fprintf(debug, "msg: (%s) %v\n", reflect.TypeOf(msg), msg)
 
 	if m.filter.mode == FilterFocused {
 		switch msg := msg.(type) {
@@ -219,6 +234,8 @@ func (m *ListCtrl[T, C]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "/":
 			return m, m.filter.SetFocused
+		case "?":
+			return m, m.ToggleHelp
 		}
 	}
 
@@ -235,6 +252,8 @@ func (m *ListCtrl[T, C]) Init() tea.Cmd {
 
 // ListUpdateMsg is a type used for messages that update the list.
 type ListUpdateMsg int
+
+type FooterUpdateMsg int
 
 // Select selects a choice from the list and returns a command.
 func (m *ListCtrl[T, C]) Select(choice *Choice[C]) tea.Cmd {
@@ -254,6 +273,11 @@ func (m *ListCtrl[T, C]) ClearSelected() tea.Msg {
 func (m *ListCtrl[T, C]) SelectAll() tea.Msg {
 	m.list.SelectAll()
 	return ListUpdateMsg(len(m.list.Items()))
+}
+
+func (m *ListCtrl[T, C]) ToggleHelp() tea.Msg {
+	m.helpActive = !m.helpActive
+	return FooterUpdateMsg(utils.Ternary(m.helpActive, 1, 0))
 }
 
 // MoveCursor moves the cursor by the specified amount and returns a command.
